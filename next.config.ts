@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   serverExternalPackages: ["pino", "pino-pretty"],
+  images: {
+    remotePatterns: [{ hostname: "utfs.io" }],
+  },
 };
 
 export default nextConfig;
