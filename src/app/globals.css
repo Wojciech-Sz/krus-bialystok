@@ -1,6 +1,110 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@plugin 'tailwindcss-animate';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(
+    var(--popover-foreground)
+  );
+
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(
+    var(--primary-foreground)
+  );
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(
+    var(--secondary-foreground)
+  );
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(
+    var(--destructive-foreground)
+  );
+
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}
+
+@utility nav-li {
+  @apply relative before:absolute before:inset-1/2 before:block before:rounded-md before:transition-all before:duration-300 hover:before:inset-[-0.5px] hover:before:bg-accent hover:text-accent-foreground;
+}
+
+@utility section {
+  @apply flex bg-background w-full flex-col items-center section-px;
+}
+
+@utility section-container {
+  @apply flex w-full max-w-7xl flex-col section-gap;
+}
+
+@utility section-pt-big {
+  @apply pt-16 lg:pt-20;
+}
+
+@utility section-pt-small {
+  @apply pt-5 lg:pt-7;
+}
+
+@utility section-pb {
+  @apply pb-5 lg:pb-7;
+}
+
+@utility section-px {
+  @apply px-5 sm:px-7;
+}
+
+@utility section-gap {
+  @apply gap-5 lg:gap-7;
+}
+
+@utility section-title {
+  @apply text-3xl font-bold tracking-tight lg:text-4xl;
+}
 
 @layer base {
   :root {
@@ -65,45 +169,5 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-@layer utilities {
-  /* Navigation */
-  .nav-li {
-    @apply relative before:absolute before:inset-1/2 before:block before:rounded-md before:transition-all before:duration-300 before:hover:inset-[-0.5px] before:hover:bg-accent hover:text-accent-foreground;
-  }
-
-  /* Section */
-  .section {
-    @apply flex bg-background w-full flex-col items-center section-px;
-  }
-
-  .section-container {
-    @apply flex w-full max-w-7xl flex-col section-gap;
-  }
-
-  .section-pt-big {
-    @apply pt-16 lg:pt-20;
-  }
-
-  .section-pt-small {
-    @apply pt-5 lg:pt-7;
-  }
-
-  .section-pb {
-    @apply pb-5 lg:pb-7;
-  }
-
-  .section-px {
-    @apply px-5 sm:px-7;
-  }
-
-  .section-gap {
-    @apply gap-5 lg:gap-7;
-  }
-
-  .section-title {
-    @apply text-3xl font-bold tracking-tight lg:text-4xl;
   }
 }

@@ -15,7 +15,11 @@ const NavLinks = () => {
               "rounded-md bg-primary text-background transition-all duration-300 hover:text-accent-foreground"
             }`}
           >
-            <Link href={link.href} className="relative block px-2" scroll>
+            <Link
+              href={link.href}
+              className="relative block px-2"
+              scroll
+            >
               {link.name}
             </Link>
           </li>

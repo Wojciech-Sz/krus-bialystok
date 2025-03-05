@@ -21,8 +21,12 @@ const Team = () => {
               height={200}
               className="aspect-square rounded-full bg-green-700 object-cover"
             />
-            <h3 className="text-center text-2xl font-bold">{member.name}</h3>
-            <p className="text-center text-lg">{member.position}</p>
+            <h3 className="text-center text-2xl font-bold">
+              {member.name}
+            </h3>
+            <p className="text-center text-lg">
+              {member.position}
+            </p>
           </div>
         ))}
       </div>
