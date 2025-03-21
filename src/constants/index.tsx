@@ -24,11 +24,13 @@ export const socialLinks = [
     id: 1,
     icon: <FacebookIcon />,
     href: "https://facebook.com",
+    title: "Facebook",
   },
   {
     id: 2,
     icon: <InstagramIcon />,
     href: "https://instagram.com",
+    title: "Instagram",
   },
 ];
 
