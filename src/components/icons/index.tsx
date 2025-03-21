@@ -1,5 +1,3 @@
-import { IconProps } from "@/types";
-
 export function FacebookIcon(props: IconProps) {
   return (
     <svg

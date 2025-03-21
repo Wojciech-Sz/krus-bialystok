@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["pino", "pino-pretty"],
   images: {
-    remotePatterns: [{ hostname: "utfs.io" }],
+    remotePatterns: [{ hostname: "0emf60eliu.ufs.sh" }],
   },
 };
 
