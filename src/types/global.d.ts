@@ -6,6 +6,7 @@ type IconProps = {
 };
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+type Params = Promise<{ [key: string]: string | undefined }>;
 
 type NewsArticle = {
   id: string;
@@ -16,3 +17,23 @@ type NewsArticle = {
   publishedAt: Date;
   isPublished: boolean; // For draft/preview functionality
 };
+
+// Define the error types
+type FormErrors = {
+  title?: string[];
+  slug?: string[];
+  mainImage?: string[];
+  content?: string[];
+  _form?: string[];
+};
+
+interface NewsItem {
+  title: string;
+  slug: string;
+  mainImage: string;
+}
+
+interface SidebarNewsItem {
+  title: string;
+  slug: string;
+}

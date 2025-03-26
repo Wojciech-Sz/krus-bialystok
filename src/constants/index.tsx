@@ -7,7 +7,7 @@ export const navLinks = [
   },
   {
     name: "Aktualności",
-    href: "/#posts",
+    href: "/#news",
   },
   {
     name: "Zespół",

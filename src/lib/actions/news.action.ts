@@ -1,11 +1,14 @@
 "use server";
 
-import { count, sql } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { db } from "@/db/drizzle";
 import { news } from "@/db/schema";
+import { NewsSchema } from "@/lib/validation";
 
-const getNewsListing = async (page: number) => {
+export const getNewsListing = async (page: number) => {
   return db
     .select({
       slug: news.slug,
@@ -18,7 +21,150 @@ const getNewsListing = async (page: number) => {
     .offset((page - 1) * 6);
 };
 
-export const getNewsCount = async () =>
-  await db.select({ count: count() }).from(news);
+export const getNewsSidebar = async (page: number, search?: string) => {
+  if (search) {
+    return db
+      .select({
+        slug: news.slug,
+        title: news.title,
+      })
+      .from(news)
+      .where(sql`${news.title} ILIKE ${`%${search}%`}`)
+      .orderBy(sql`${news.publishedAt} desc`)
+      .limit(6)
+      .offset((page - 1) * 6);
+  }
 
-export default getNewsListing;
+  return db
+    .select({
+      slug: news.slug,
+      title: news.title,
+    })
+    .from(news)
+    .orderBy(sql`${news.publishedAt} desc`)
+    .limit(6)
+    .offset((page - 1) * 6);
+};
+
+export const getNewsCount = async (search?: string) => {
+  if (search) {
+    return db
+      .select({ count: count() })
+      .from(news)
+      .where(sql`${news.title} ILIKE ${`%${search}%`}`);
+  }
+
+  return db.select({ count: count() }).from(news);
+};
+
+export const getNewsById = async (id: number) => {
+  const result = await db
+    .select({ slug: news.slug })
+    .from(news)
+    .where(eq(news.id, id))
+    .limit(1);
+  return result[0];
+};
+
+export const getNewsBySlug = async (slug: string) => {
+  const result = await db
+    .select({
+      id: news.id,
+      title: news.title,
+      slug: news.slug,
+      mainImage: news.mainImage,
+      content: news.content,
+    })
+    .from(news)
+    .where(eq(news.slug, slug))
+    .limit(1);
+
+  return result[0];
+};
+
+// Schema for news validation
+
+export type NewsFormValues = z.infer<typeof NewsSchema>;
+
+export const createNews = async (values: NewsFormValues) => {
+  try {
+    const validatedFields = NewsSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+      return { error: validatedFields.error.flatten().fieldErrors };
+    }
+
+    const { title, slug, mainImage, content } = validatedFields.data;
+
+    // Check if slug already exists
+
+    await db.insert(news).values({
+      title,
+      slug,
+      mainImage,
+      content,
+    });
+
+    revalidatePath("/");
+    revalidatePath("/studio");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error creating news:", error);
+    return {
+      error: { _form: ["Failed to create news. Please try again.", error] },
+    };
+  }
+};
+
+export const updateNews = async (id: number, values: NewsFormValues) => {
+  try {
+    const validatedFields = NewsSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+      return { error: validatedFields.error.flatten().fieldErrors };
+    }
+
+    const { title, slug, mainImage, content } = validatedFields.data;
+
+    // Make sure the news item exists before updating
+    const newsToUpdate = await getNewsById(id);
+    if (!newsToUpdate) {
+      return { error: { _form: ["News item not found"] } };
+    }
+
+    // Update the existing news item
+    await db
+      .update(news)
+      .set({
+        title,
+        slug,
+        mainImage,
+        content,
+      })
+      .where(eq(news.id, id));
+
+    revalidatePath("/");
+    revalidatePath(`/news/${slug}`);
+    revalidatePath("/studio");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating news:", error);
+    return { error: { _form: ["Failed to update news. Please try again."] } };
+  }
+};
+
+export const deleteNews = async (slug: string) => {
+  try {
+    await db.delete(news).where(eq(news.slug, slug));
+
+    revalidatePath("/");
+    revalidatePath("/studio");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting news:", error);
+    return { error: { _form: ["Failed to delete news. Please try again."] } };
+  }
+};
