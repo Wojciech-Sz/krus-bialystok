@@ -46,6 +46,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
 
   const onSubmit = async (values: NewsFormValues) => {
     setIsSubmitting(true);
+
     try {
       const result = initialData?.id
         ? await updateNews(initialData.id, values)
@@ -70,14 +71,19 @@ export default function NewsForm({ initialData }: NewsFormProps) {
           }
         });
 
-        return;
+        throw new Error("Failed to create/update news");
       }
 
-      toast(initialData ? "News updated" : "News created", {
-        description: initialData
-          ? "Your news post has been updated."
-          : "Your news post has been created.",
-      });
+      toast.success(
+        <div>
+          <p>{initialData ? "News updated" : "News created"}</p>
+          <p className="text-muted-foreground">
+            {initialData
+              ? "Your news post has been updated."
+              : "Your news post has been created."}
+          </p>
+        </div>
+      );
 
       if (!initialData) {
         form.reset({
@@ -86,13 +92,17 @@ export default function NewsForm({ initialData }: NewsFormProps) {
           mainImage: "",
           content: "",
         });
+        router.refresh();
       } else {
         router.push("/studio");
       }
     } catch (error) {
-      toast("Something went wrong. Please try again.", {
-        description: error as string,
-      });
+      toast.error(
+        <div>
+          <p>Something went wrong. Please try again.</p>
+          <p className="text-muted-foreground">{String(error)}</p>
+        </div>
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -208,7 +218,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                       height={300}
                       style={{ borderRadius: 10, overflow: "hidden" }}
                       textareaProps={{
-                        placeholder: "Briefly describe your startup idea.",
+                        placeholder: "Enter news content here...",
                       }}
                       previewOptions={{
                         disallowedElements: ["style"],

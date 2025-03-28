@@ -34,7 +34,7 @@ export default function MainLayout({
           className={`${inter.className} ${spaceGrotesk.variable} antialiased`}
         >
           {children}
-          <Toaster />
+          <Toaster richColors />
         </body>
       </html>
     </ClerkProvider>

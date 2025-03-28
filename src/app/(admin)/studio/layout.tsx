@@ -1,4 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
 import React from "react";
 
 import NewsSidebar from "@/components/admin/NewsSidebar";
@@ -10,10 +9,6 @@ export default async function StudioLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { userId, redirectToSignIn } = await auth();
-
-  if (!userId) return redirectToSignIn();
-
   return (
     <SidebarProvider>
       <div className="flex flex-1">

@@ -1,6 +1,7 @@
 "use client";
 
-import { PlusCircle, Search, Trash2 } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
+import { Home, PlusCircle, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -128,7 +129,13 @@ export default function NewsSidebar() {
       <Sidebar variant="inset" collapsible="none">
         <SidebarHeader className="p-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">News</h2>
+            <div className="flex items-center gap-2">
+              <Link href="/">
+                <Home className="h-4 w-4" />
+              </Link>
+              <UserButton />
+              <h2 className="text-lg font-semibold">News</h2>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -177,7 +184,7 @@ export default function NewsSidebar() {
                   </SidebarMenuButton>
                   <SidebarMenuAction
                     onClick={(e) => handleDeleteClick(item, e)}
-                    className="text-destructive size-8 top-1/2! p-2 -translate-y-1/2"
+                    className="text-destructive group-hover:text-destructive/80 size-8 top-1/2! p-2 -translate-y-1/2"
                   >
                     <Trash2 />
                     <span className="sr-only">Delete</span>

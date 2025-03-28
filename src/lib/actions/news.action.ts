@@ -1,7 +1,6 @@
 "use server";
 
 import { count, eq, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle";
@@ -97,6 +96,10 @@ export const createNews = async (values: NewsFormValues) => {
     const { title, slug, mainImage, content } = validatedFields.data;
 
     // Check if slug already exists
+    const existingNews = await getNewsBySlug(slug);
+    if (existingNews) {
+      return { error: { slug: ["Slug already exists"] } };
+    }
 
     await db.insert(news).values({
       title,
@@ -104,9 +107,6 @@ export const createNews = async (values: NewsFormValues) => {
       mainImage,
       content,
     });
-
-    revalidatePath("/");
-    revalidatePath("/studio");
 
     return { success: true };
   } catch (error) {
@@ -127,6 +127,12 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
 
     const { title, slug, mainImage, content } = validatedFields.data;
 
+    // Check if slug already exists
+    const existingNews = await getNewsBySlug(slug);
+    if (existingNews && existingNews.id !== id) {
+      return { error: { slug: ["Slug already exists"] } };
+    }
+
     // Make sure the news item exists before updating
     const newsToUpdate = await getNewsById(id);
     if (!newsToUpdate) {
@@ -144,10 +150,6 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
       })
       .where(eq(news.id, id));
 
-    revalidatePath("/");
-    revalidatePath(`/news/${slug}`);
-    revalidatePath("/studio");
-
     return { success: true };
   } catch (error) {
     console.error("Error updating news:", error);
@@ -158,9 +160,6 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
 export const deleteNews = async (slug: string) => {
   try {
     await db.delete(news).where(eq(news.slug, slug));
-
-    revalidatePath("/");
-    revalidatePath("/studio");
 
     return { success: true };
   } catch (error) {

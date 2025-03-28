@@ -60,7 +60,7 @@ const Hero = () => {
           title="Hero image"
           width={1920}
           height={1080}
-          className={`absolute inset-x-0 size-full object-cover object-center ${
+          className={`absolute inset-x-0 transition-all size-full object-cover object-center ${
             i !== 0 ? "opacity-0" : ""
           }`}
         />
