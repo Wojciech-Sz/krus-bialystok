@@ -28,6 +28,7 @@ import {
   SidebarMenuAction,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
+import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
 import {
   deleteNews,
   getNewsCount,
@@ -38,6 +39,7 @@ export default function NewsSidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { refreshTimestamp } = useNewsRefresh();
   const [searchQuery, setSearchQuery] = useState("");
   const [news, setNews] = useState<SidebarNewsItem[]>([]);
   const [count, setCount] = useState(0);
@@ -51,24 +53,39 @@ export default function NewsSidebar() {
   const page = Number(searchParams.get("page")) || 1;
   const limit = 6;
 
+  // Fetch news when component mounts, when page/searchQuery changes, or when refreshTimestamp changes
   useEffect(() => {
-    const fetchNews = async () => {
+    let isMounted = true;
+    
+    const loadData = async () => {
       try {
         setLoading(true);
         const newsData = await getNewsSidebar(page, searchQuery);
         const countData = await getNewsCount(searchQuery);
 
-        setNews(newsData);
-        setCount(countData[0]?.count || 0);
+        if (isMounted) {
+          setNews(newsData);
+          setCount(countData[0]?.count || 0);
+        }
       } catch (error) {
         console.error("Error fetching news:", error);
+        if (isMounted) {
+          setNews([]);
+          setCount(0);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchNews();
-  }, [page, searchQuery]);
+    loadData();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [page, searchQuery, refreshTimestamp]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);

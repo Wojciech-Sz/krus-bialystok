@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
 import {
   createNews,
   NewsFormValues,
@@ -32,6 +33,7 @@ interface NewsFormProps {
 
 export default function NewsForm({ initialData }: NewsFormProps) {
   const router = useRouter();
+  const { triggerRefresh } = useNewsRefresh();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewsFormValues>({
@@ -85,6 +87,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
         </div>
       );
 
+      // Reset form if creating a new post
       if (!initialData) {
         form.reset({
           title: "",
@@ -92,9 +95,17 @@ export default function NewsForm({ initialData }: NewsFormProps) {
           mainImage: "",
           content: "",
         });
-        router.refresh();
+
+        // Trigger refresh of the sidebar data for new posts
+        triggerRefresh();
       } else {
-        router.push("/studio");
+        // For updates, trigger refresh first, then navigate
+        triggerRefresh();
+
+        // Small delay to ensure the refresh is processed before navigation
+        setTimeout(() => {
+          router.push("/studio");
+        }, 500);
       }
     } catch (error) {
       toast.error(
