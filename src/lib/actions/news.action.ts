@@ -1,6 +1,7 @@
 "use server";
 
 import { count, eq, sql } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle";
@@ -108,6 +109,10 @@ export const createNews = async (values: NewsFormValues) => {
       content,
     });
 
+    // Revalidate the home page and news page to show the latest content
+    revalidatePath("/");
+    revalidatePath("/news/[slug]", "page");
+
     return { success: true };
   } catch (error) {
     console.error("Error creating news:", error);
@@ -150,6 +155,15 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
       })
       .where(eq(news.id, id));
 
+    // Revalidate the home page and the specific news page
+    revalidatePath("/");
+    revalidatePath(`/news/${slug}`);
+    
+    // If the slug was changed, also revalidate the old slug path
+    if (newsToUpdate.slug !== slug) {
+      revalidatePath(`/news/${newsToUpdate.slug}`);
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error updating news:", error);
@@ -160,6 +174,10 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
 export const deleteNews = async (slug: string) => {
   try {
     await db.delete(news).where(eq(news.slug, slug));
+
+    // Revalidate the home page and the specific news page
+    revalidatePath("/");
+    revalidatePath(`/news/${slug}`);
 
     return { success: true };
   } catch (error) {

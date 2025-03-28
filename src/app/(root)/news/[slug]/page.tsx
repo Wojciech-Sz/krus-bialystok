@@ -4,6 +4,9 @@ import React from "react";
 
 import { getNewsBySlug } from "@/lib/actions/news.action";
 
+// Define the cache configuration
+export const revalidate = 3600; // Revalidate at most every hour
+
 export async function generateMetadata({
   params,
 }: {
