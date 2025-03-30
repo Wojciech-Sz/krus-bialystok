@@ -25,7 +25,7 @@ const NavLinks = () => {
       <SignedIn>
         <UserButton />
         <div className="nav-li rounded-md bg-primary text-background transition-all duration-300">
-          <Link href="/studio" className="relative block px-2">
+          <Link href="/studio" prefetch={false} className="relative block px-2">
             Studio
           </Link>
         </div>

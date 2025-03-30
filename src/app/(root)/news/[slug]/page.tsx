@@ -1,3 +1,4 @@
+import markdownit from "markdown-it";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import React from "react";
@@ -35,25 +36,27 @@ const NewsPage = async ({ params }: { params: { slug: string } }) => {
   if (!news) {
     notFound();
   }
+  const md = markdownit();
+  const parsedContent = md.render(news.content);
 
   return (
     <main className="container mx-auto px-4 py-8 max-w-4xl">
       <article className="prose prose-lg max-w-none">
         <h1 className="text-3xl md:text-4xl font-bold mb-6">{news.title}</h1>
 
-        <div className="relative w-full h-[300px] md:h-[400px] mb-8 rounded-lg overflow-hidden">
+        <div className="relative w-full h-[300px] md:h-[400px] mb-8">
           <Image
             src={news.mainImage}
             alt={news.title}
             fill
-            className="object-cover"
+            className="object-cover rounded-lg"
             priority
           />
         </div>
 
         <div
           className="mt-8"
-          dangerouslySetInnerHTML={{ __html: news.content }}
+          dangerouslySetInnerHTML={{ __html: parsedContent }}
         />
       </article>
     </main>

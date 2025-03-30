@@ -4,7 +4,7 @@ import { UserButton } from "@clerk/nextjs";
 import { Home, PlusCircle, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -18,22 +18,23 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuAction,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar";
 import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
 import {
   deleteNews,
   getNewsCount,
   getNewsSidebar,
 } from "@/lib/actions/news.action";
+import { cn } from "@/lib/utils";
+
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationLink,
+  PaginationNext,
+  PaginationEllipsis,
+} from "../ui/pagination";
 
 export default function NewsSidebar() {
   const router = useRouter();
@@ -41,6 +42,7 @@ export default function NewsSidebar() {
   const searchParams = useSearchParams();
   const { refreshTimestamp } = useNewsRefresh();
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [news, setNews] = useState<SidebarNewsItem[]>([]);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -49,19 +51,42 @@ export default function NewsSidebar() {
     null
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const page = Number(searchParams.get("page")) || 1;
+  const currentPage = Number(searchParams.get("page")) || 1;
   const limit = 6;
 
-  // Fetch news when component mounts, when page/searchQuery changes, or when refreshTimestamp changes
+  const totalPages = Math.ceil(count / limit);
+
+  // Effect for debouncing search query
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 500); // 500ms delay
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
+
+  // Effect for handling page changes and search query
   useEffect(() => {
     let isMounted = true;
-    
+
     const loadData = async () => {
       try {
         setLoading(true);
-        const newsData = await getNewsSidebar(page, searchQuery);
-        const countData = await getNewsCount(searchQuery);
+        const newsData = await getNewsSidebar(
+          currentPage,
+          debouncedSearchQuery
+        );
+        const countData = await getNewsCount(debouncedSearchQuery);
 
         if (isMounted) {
           setNews(newsData);
@@ -81,15 +106,14 @@ export default function NewsSidebar() {
     };
 
     loadData();
-    
+
     return () => {
       isMounted = false;
     };
-  }, [page, searchQuery, refreshTimestamp]);
+  }, [currentPage, debouncedSearchQuery, refreshTimestamp]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    router.push("/studio");
   };
 
   const handleDeleteClick = (item: SidebarNewsItem, e: React.MouseEvent) => {
@@ -112,8 +136,11 @@ export default function NewsSidebar() {
         });
 
         // Refresh the news list
-        const newsData = await getNewsSidebar(page, searchQuery);
-        const countData = await getNewsCount(searchQuery);
+        const newsData = await getNewsSidebar(
+          currentPage,
+          debouncedSearchQuery
+        );
+        const countData = await getNewsCount(debouncedSearchQuery);
 
         setNews(newsData);
         setCount(countData[0]?.count || 0);
@@ -139,12 +166,10 @@ export default function NewsSidebar() {
     }
   };
 
-  const totalPages = Math.ceil(count / limit);
-
   return (
     <>
-      <Sidebar variant="inset" collapsible="none">
-        <SidebarHeader className="p-4">
+      <div className="flex h-screen sticky top-0 pb-4 bg-sidebar max-w-70 w-full flex-col">
+        <div className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Link href="/">
@@ -172,76 +197,115 @@ export default function NewsSidebar() {
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
-        </SidebarHeader>
+        </div>
 
         <Separator />
 
-        <SidebarContent className="px-2 mt-2">
+        <div className="px-2 flex-1 mt-2 overflow-auto">
           {loading ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
               Loading news...
             </div>
           ) : news.length === 0 ? (
             <div className="py-6 text-center text-sm text-muted-foreground">
-              {searchQuery
+              {debouncedSearchQuery
                 ? "No news found matching your search."
                 : "No news posts yet."}
             </div>
           ) : (
-            <SidebarMenu>
+            <div className="flex flex-col gap-2 overflow-auto">
               {news.map((item) => (
-                <SidebarMenuItem key={item.slug}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === `/studio/${item.slug}`}
-                  >
-                    <Link className="h-full" href={`/studio/${item.slug}`}>
-                      {item.title}
-                    </Link>
-                  </SidebarMenuButton>
-                  <SidebarMenuAction
-                    onClick={(e) => handleDeleteClick(item, e)}
-                    className="text-destructive group-hover:text-destructive/80 size-8 top-1/2! p-2 -translate-y-1/2"
-                  >
-                    <Trash2 />
-                    <span className="sr-only">Delete</span>
-                  </SidebarMenuAction>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          )}
-        </SidebarContent>
+                <Link
+                  href={`/studio/${item.slug}`}
+                  className={cn(
+                    "flex items-center p-2 border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 rounded-md justify-between",
+                    pathname === `/studio/${item.slug}` &&
+                      "bg-accent text-accent-foreground"
+                  )}
+                  key={item.slug}
+                >
+                  <p className="text-wrap text-sm">{item.title}</p>
 
-        {totalPages > 1 && (
-          <SidebarFooter className="p-4">
-            <div className="flex justify-between items-center">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => {
-                  router.push(`/studio?page=${page - 1}`);
-                }}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => {
-                  router.push(`/studio?page=${page + 1}`);
-                }}
-              >
-                Next
-              </Button>
+                  <button
+                    onClick={(e) => handleDeleteClick(item, e)}
+                    className="text-accent-foreground cursor-pointer hover:text-destructive"
+                  >
+                    <Trash2 className="size-5" />
+                    <span className="sr-only">Delete</span>
+                  </button>
+                </Link>
+              ))}
             </div>
-          </SidebarFooter>
-        )}
-      </Sidebar>
+          )}
+        </div>
+
+        <Pagination>
+          <PaginationContent>
+            {currentPage > 1 && (
+              <PaginationItem>
+                <PaginationPrevious
+                  size="icon"
+                  href={`/studio?page=${currentPage - 1}`}
+                  spanClassName="sm:hidden"
+                />
+              </PaginationItem>
+            )}
+            {currentPage >= 3 && (
+              <PaginationItem>
+                <PaginationEllipsis className="size-5" />
+              </PaginationItem>
+            )}
+            {/* Calculate which page numbers to show */}
+            {(() => {
+              let pagesToShow = [];
+
+              if (currentPage <= 2) {
+                // For pages 1 and 2, show pages 1, 2, 3
+                pagesToShow = [1, 2, 3].filter((page) => page <= totalPages);
+              } else if (currentPage >= totalPages - 1) {
+                // For last 2 pages, show last 3 pages
+                pagesToShow = [
+                  totalPages - 2,
+                  totalPages - 1,
+                  totalPages,
+                ].filter((page) => page >= 1);
+              } else {
+                // For page 3+, show current-1, current, current+1
+                pagesToShow = [
+                  currentPage - 1,
+                  currentPage,
+                  currentPage + 1,
+                ].filter((page) => page <= totalPages);
+              }
+
+              return pagesToShow.map((pageNum) => (
+                <PaginationItem key={pageNum}>
+                  <PaginationLink
+                    href={`/studio?page=${pageNum}`}
+                    isActive={currentPage === pageNum}
+                  >
+                    {pageNum}
+                  </PaginationLink>
+                </PaginationItem>
+              ));
+            })()}
+            {currentPage < totalPages - 1 && (
+              <PaginationItem>
+                <PaginationEllipsis className="size-5" />
+              </PaginationItem>
+            )}
+            {currentPage < totalPages && (
+              <PaginationItem>
+                <PaginationNext
+                  size="icon"
+                  href={`/studio?page=${currentPage + 1}`}
+                  spanClassName="sm:hidden"
+                />
+              </PaginationItem>
+            )}
+          </PaginationContent>
+        </Pagination>
+      </div>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
