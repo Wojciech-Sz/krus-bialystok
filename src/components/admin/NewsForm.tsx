@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
 import {
   createNews,
   NewsFormValues,
@@ -35,6 +36,7 @@ interface NewsFormProps {
 export default function NewsForm({ initialData }: NewsFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { triggerRefresh } = useNewsRefresh();
 
   const form = useForm<NewsFormValues>({
     resolver: zodResolver(NewsSchema),
@@ -95,8 +97,13 @@ export default function NewsForm({ initialData }: NewsFormProps) {
           mainImage: "",
           content: "",
         });
+        // Trigger refresh after creating a new post
+        triggerRefresh();
       } else {
+        // For updates, trigger refresh first, then navigate
+        triggerRefresh();
         // Small delay to ensure the refresh is processed before navigation
+        await new Promise((resolve) => setTimeout(resolve, 200));
         router.push("/studio");
       }
     } catch (error) {

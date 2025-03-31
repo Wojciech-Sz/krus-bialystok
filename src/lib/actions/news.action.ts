@@ -113,7 +113,7 @@ export const createNews = async (values: NewsFormValues) => {
 
     // Revalidate the home page and news page to show the latest content
     revalidatePath("/");
-    revalidatePath("/news/[slug]", "page");
+    revalidatePath(`/news/${slug}`);
 
     return { success: true };
   } catch (error) {

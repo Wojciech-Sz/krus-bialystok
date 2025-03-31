@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
 import {
   deleteNews,
   getNewsCount,
@@ -38,6 +39,7 @@ import {
 export default function NewsSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { refreshTimestamp } = useNewsRefresh();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
@@ -72,13 +74,14 @@ export default function NewsSidebar() {
     };
   }, [searchQuery]);
 
-  // Effect for handling page changes and search query
+  // Effect for handling page changes, search query, and refresh trigger
   useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
       try {
         setLoading(true);
+        setNews([]);
         const newsData = await getNewsSidebar(
           currentPage,
           debouncedSearchQuery
@@ -107,7 +110,7 @@ export default function NewsSidebar() {
     return () => {
       isMounted = false;
     };
-  }, [currentPage, debouncedSearchQuery]);
+  }, [currentPage, debouncedSearchQuery, refreshTimestamp]);
 
   const handleDeleteNews = async () => {
     if (!newsToDelete) return;
@@ -146,7 +149,7 @@ export default function NewsSidebar() {
   };
 
   return (
-    <div className="flex h-full flex-col max-w-70">
+    <div className="flex sticky h-screen inset-y-0 top-0 flex-col w-70">
       <div className="flex items-center gap-2 p-4">
         <Link href="/" className="mr-auto">
           <Button variant="ghost" size="icon">
@@ -181,6 +184,7 @@ export default function NewsSidebar() {
                 <Link
                   title={item.title}
                   href={`/studio/${item.slug}`}
+                  prefetch={false}
                   className={cn(
                     "line-clamp-1 overflow-hidden flex-1 rounded-lg p-1 hover:bg-accent",
                     pathname === `/studio/${item.slug}` &&
@@ -192,7 +196,7 @@ export default function NewsSidebar() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 shrink-0"
+                  className="h-8 w-8 hover:text-destructive cursor-pointer shrink-0"
                   onClick={() => {
                     setNewsToDelete(item);
                     setDeleteDialogOpen(true);
@@ -214,63 +218,72 @@ export default function NewsSidebar() {
       {totalPages > 1 && (
         <div className="p-4">
           <Pagination>
-            <PaginationContent>
-              {currentPage > 1 && (
-                <PaginationItem>
-                  <PaginationPrevious
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(currentPage - 1);
-                    }}
-                  />
-                </PaginationItem>
-              )}
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                (page) => {
-                  if (
-                    page === 1 ||
-                    page === totalPages ||
-                    (page >= currentPage - 1 && page <= currentPage + 1)
-                  ) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationLink
-                          href="#"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handlePageChange(page);
-                          }}
-                          isActive={page === currentPage}
-                        >
-                          {page}
-                        </PaginationLink>
-                      </PaginationItem>
-                    );
-                  } else if (
-                    page === currentPage - 2 ||
-                    page === currentPage + 2
-                  ) {
-                    return (
-                      <PaginationItem key={page}>
-                        <PaginationEllipsis />
-                      </PaginationItem>
-                    );
+            <PaginationContent className="flex flex-col items-center">
+              <div className="flex items-center">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => {
+                    if (
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1)
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            prefetch={false}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handlePageChange(page);
+                            }}
+                            isActive={page === currentPage}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (
+                      page === currentPage - 2 ||
+                      page === currentPage + 2
+                    ) {
+                      return (
+                        <PaginationItem key={page}>
+                          <PaginationEllipsis />
+                        </PaginationItem>
+                      );
+                    }
+                    return null;
                   }
-                  return null;
-                }
-              )}
-              {currentPage < totalPages && (
-                <PaginationItem>
-                  <PaginationNext
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(currentPage + 1);
-                    }}
-                  />
-                </PaginationItem>
-              )}
+                )}
+              </div>
+              <div className="flex justify-between items-center">
+                {currentPage > 1 && (
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      prefetch={false}
+                      spanClassName="sm:hidden"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(currentPage - 1);
+                      }}
+                    />
+                  </PaginationItem>
+                )}
+                {currentPage < totalPages && (
+                  <PaginationItem className="self-end">
+                    <PaginationNext
+                      href="#"
+                      prefetch={false}
+                      spanClassName="sm:hidden"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(currentPage + 1);
+                      }}
+                    />
+                  </PaginationItem>
+                )}
+              </div>
             </PaginationContent>
           </Pagination>
         </div>
