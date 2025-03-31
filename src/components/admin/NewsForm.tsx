@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
 import {
   createNews,
   NewsFormValues,
@@ -35,7 +34,6 @@ interface NewsFormProps {
 
 export default function NewsForm({ initialData }: NewsFormProps) {
   const router = useRouter();
-  const { triggerRefresh } = useNewsRefresh();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<NewsFormValues>({
@@ -97,17 +95,9 @@ export default function NewsForm({ initialData }: NewsFormProps) {
           mainImage: "",
           content: "",
         });
-
-        // Trigger refresh of the sidebar data for new posts
-        triggerRefresh();
       } else {
-        // For updates, trigger refresh first, then navigate
-        triggerRefresh();
-
         // Small delay to ensure the refresh is processed before navigation
-        setTimeout(() => {
-          router.push("/studio");
-        }, 500);
+        router.push("/studio");
       }
     } catch (error) {
       toast.error(
@@ -131,7 +121,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
 
   return (
     <div className="flex gap-2 ">
-      <div className="space-y-3 pt-4 sticky h-screen top-0 flex-1 max-w-2xl">
+      <div className="space-y-3 pt-4 sticky h-screen top-0 flex-1 max-w-xl">
         <div>
           <h1 className="text-2xl font-bold">
             {initialData ? "Edit News Post" : "Create News Post"}

@@ -8,12 +8,9 @@ import { getNewsBySlug } from "@/lib/actions/news.action";
 // Define the cache configuration
 export const revalidate = 3600; // Revalidate at most every hour
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const news = await getNewsBySlug(params.slug);
+export async function generateMetadata({ params }: { params: Params }) {
+  const { slug } = await params;
+  const news = await getNewsBySlug(slug!);
 
   if (!news) {
     return {
@@ -30,8 +27,9 @@ export async function generateMetadata({
   };
 }
 
-const NewsPage = async ({ params }: { params: { slug: string } }) => {
-  const news = await getNewsBySlug(params.slug);
+const NewsPage = async (params: Params) => {
+  const { slug } = await params;
+  const news = await getNewsBySlug(slug!);
 
   if (!news) {
     notFound();

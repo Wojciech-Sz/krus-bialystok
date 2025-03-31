@@ -8,6 +8,8 @@ import { db } from "@/db/drizzle";
 import { news } from "@/db/schema";
 import { NewsSchema } from "@/lib/validation";
 
+import logger from "../logger";
+
 export const getNewsListing = async (page: number) => {
   return db
     .select({
@@ -115,7 +117,7 @@ export const createNews = async (values: NewsFormValues) => {
 
     return { success: true };
   } catch (error) {
-    console.error("Error creating news:", error);
+    logger.error("Error creating news:", error);
     return {
       error: { _form: ["Failed to create news. Please try again.", error] },
     };
@@ -158,7 +160,7 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
     // Revalidate the home page and the specific news page
     revalidatePath("/");
     revalidatePath(`/news/${slug}`);
-    
+
     // If the slug was changed, also revalidate the old slug path
     if (newsToUpdate.slug !== slug) {
       revalidatePath(`/news/${newsToUpdate.slug}`);
@@ -166,7 +168,7 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
 
     return { success: true };
   } catch (error) {
-    console.error("Error updating news:", error);
+    logger.error("Error updating news:", error);
     return { error: { _form: ["Failed to update news. Please try again."] } };
   }
 };
@@ -181,7 +183,7 @@ export const deleteNews = async (slug: string) => {
 
     return { success: true };
   } catch (error) {
-    console.error("Error deleting news:", error);
+    logger.error("Error deleting news:", error);
     return { error: { _form: ["Failed to delete news. Please try again."] } };
   }
 };
