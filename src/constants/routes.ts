@@ -1,4 +1,4 @@
 export const ROUTES = {
   HOME: "/",
-  NEWS: (slug: string) => `/aktualnosci/${slug}`,
+  NEWS: (slug: string) => `/news/${slug}`,
 };

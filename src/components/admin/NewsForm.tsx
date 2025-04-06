@@ -61,7 +61,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
         const errors = result.error as FormErrors;
 
         if (errors._form) {
-          toast("Something went wrong. Please try again.", {
+          toast.error("Something went wrong. Please try again.", {
             description: errors._form[0],
           });
         }

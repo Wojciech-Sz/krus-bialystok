@@ -1,34 +1,45 @@
+import { ContactRound, File, Home, Newspaper, UsersRound } from "lucide-react";
+
 import { FacebookIcon, InstagramIcon } from "@/components/icons";
 
 export const navLinks = [
   {
     name: "Home",
     href: "/",
+    icon: <Home className="size-7" />,
   },
   {
     name: "Aktualności",
     href: "/#news",
+    icon: <Newspaper className="size-7" />,
   },
   {
-    name: "Zespół",
-    href: "/#team",
+    name: "O nas",
+    href: "/#about",
+    icon: <UsersRound className="size-7" />,
+  },
+  {
+    name: "Dokumenty",
+    href: "/#documents",
+    icon: <File className="size-7" />,
   },
   {
     name: "Kontakt",
     href: "/#contact",
+    icon: <ContactRound className="size-7" />,
   },
 ];
 
 export const socialLinks = [
   {
     id: 1,
-    icon: <FacebookIcon />,
+    icon: <FacebookIcon className="size-7" />,
     href: "https://facebook.com",
     title: "Facebook",
   },
   {
     id: 2,
-    icon: <InstagramIcon />,
+    icon: <InstagramIcon className="size-7" />,
     href: "https://instagram.com",
     title: "Instagram",
   },

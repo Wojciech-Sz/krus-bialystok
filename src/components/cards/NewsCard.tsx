@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
+import { ROUTES } from "@/constants/routes";
+
 interface NewsCardProps {
   slug: string;
   mainImage: string;
@@ -11,7 +13,7 @@ interface NewsCardProps {
 const NewsCard: React.FC<NewsCardProps> = ({ slug, mainImage, title }) => {
   return (
     <Link
-      href={`/news/${slug}`}
+      href={ROUTES.NEWS(slug)}
       prefetch={false}
       className={`group relative size-full overflow-hidden rounded-md`}
     >
