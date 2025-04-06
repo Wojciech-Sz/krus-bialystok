@@ -8,7 +8,7 @@ const NavLinks = () => {
   return (
     <nav
       role="navigation"
-      className="sm:flex xl:absolute w-max xl:left-1/2 xl:-translate-x-1/2 hidden gap-2 text-lg font-semibold"
+      className="sm:flex justify-self-center hidden gap-2 "
     >
       <ul className="flex items-center gap-2">
         {navLinks.map((link) => (
@@ -21,15 +21,11 @@ const NavLinks = () => {
           >
             <Link
               href={link.href}
-              className="relative flex gap-1 px-2 py-1"
+              className="relative flex items-center gap-1 px-2 py-1"
               scroll
             >
-              <span
-                title={link.name}
-                className="flex items-center justify-center"
-              >
-                {link.icon}
-              </span>
+              {link.icon}
+
               <p className="hidden lg:block">{link.name}</p>
             </Link>
           </li>

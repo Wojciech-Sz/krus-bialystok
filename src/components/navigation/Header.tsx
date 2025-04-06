@@ -86,10 +86,10 @@ const Header = () => {
     <header
       className={`section-px sticky top-0 z-50 h-16 w-full bg-background/90 ${!isOpen && "shadow-md"}`}
     >
-      <div className="flex relative items-center justify-between h-full">
+      <div className="grid lg:gap-1 md:gap-10 gap-1 sm:gap-7 grid-cols-[minmax(max-content,1fr)_minmax(max-content,1fr)_minmax(max-content,1fr)] items-center h-full">
         <button
           title="Menu"
-          aria-label="Włacz menu"
+          aria-label="Włącz menu"
           className="cursor-pointer p-0 sm:hidden block"
           onMouseDown={toggleMenu}
         >
@@ -101,7 +101,7 @@ const Header = () => {
           />
         </button>
         <Link href={"#hero"} scroll>
-          <h1 className="sm:text-4xl text-3xl w-max max-sm:absolute max-sm:top-1/2 max-sm:left-1/2 max-sm:-translate-x-1/2 max-sm:-translate-y-1/2 text-primary font-space-grotesk font-bold">
+          <h1 className="text-3xl md:text-4xl max-sm:justify-self-center text-primary font-space-grotesk font-bold">
             Krus Białystok
           </h1>
         </Link>

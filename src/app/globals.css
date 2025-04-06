@@ -146,7 +146,7 @@
 /* Utilities */
 
 @utility nav-li {
-  @apply relative before:absolute before:inset-1/2 before:block before:rounded-md before:transition-all before:duration-300 hover:before:inset-[-0.5px] hover:before:bg-accent hover:text-accent-foreground;
+  @apply relative before:absolute before:inset-1/2 before:block before:rounded-md before:transition-all before:duration-300 hover:before:inset-[-0.5px] hover:before:bg-accent hover:text-accent-foreground text-lg font-semibold;
 }
 
 @utility navbar-links_container {
@@ -174,7 +174,7 @@
 }
 
 @utility section-px {
-  @apply px-5 sm:px-7;
+  @apply px-5 xl:px-7;
 }
 
 @utility section-gap {
