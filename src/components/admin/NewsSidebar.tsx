@@ -149,8 +149,8 @@ export default function NewsSidebar() {
   };
 
   return (
-    <div className="flex sticky h-screen inset-y-0 top-0 flex-col w-70">
-      <div className="flex items-center gap-2 p-4">
+    <div className="flex bg-background/90 flex-1 z-50 sticky h-screen md:inset-y-0 top-0 flex-col md:max-w-70">
+      <div className="flex items-center gap-2 p-2 md:p-4">
         <Link href="/" className="mr-auto">
           <Button variant="ghost" size="icon">
             <Home className="h-5 w-5" />
@@ -164,7 +164,7 @@ export default function NewsSidebar() {
         <UserButton />
       </div>
       <Separator />
-      <div className="p-4">
+      <div className="p-2 md:p-4">
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input

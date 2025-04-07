@@ -20,14 +20,11 @@ const Preview = ({
 
   return (
     <div className="flex-1 flex pt-4 flex-col max-w-3xl mx-auto px-2">
-      <h1 className="text-3xl md:text-4xl text-center font-bold mb-6">
-        Preview
-      </h1>
-      <article>
-        <h1 className="text-3xl md:text-4xl font-bold mb-6">{title}</h1>
+      <article className="flex flex-col gap-6">
+        <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
 
         {mainImage && (
-          <div className="relative w-full h-[300px] md:h-[400px] mb-8">
+          <div className="relative w-full h-[300px] md:h-[400px]">
             <Image
               src={mainImage}
               alt={title}
@@ -39,7 +36,7 @@ const Preview = ({
         )}
 
         <div
-          className="mt-8 prose prose-lg"
+          className="prose prose-lg max-w-none"
           dangerouslySetInnerHTML={{ __html: parsedContent }}
         />
       </article>

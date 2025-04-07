@@ -22,11 +22,17 @@ const MobileLinks = ({ closeMenu }: { closeMenu: () => void }) => {
         ))}
       </ul>
       <SignedIn>
-        <UserButton />
-        <div className="nav-li rounded-md bg-primary text-background transition-all duration-300">
-          <Link href="/studio" prefetch={false} className="relative block px-2">
-            Studio
-          </Link>
+        <div className="flex px-1 gap-2 py-2">
+          <UserButton />
+          <div className="nav-li rounded-md transition-all duration-300">
+            <Link
+              href="/studio"
+              prefetch={false}
+              className="relative block px-2"
+            >
+              Studio
+            </Link>
+          </div>
         </div>
       </SignedIn>
     </>

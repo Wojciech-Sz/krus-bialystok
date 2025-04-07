@@ -35,6 +35,7 @@ const NewsPage = async ({ params }: { params: Params }) => {
   if (!slug) {
     notFound();
   }
+
   const news = await getNewsBySlug(slug!);
 
   if (!news) {
@@ -44,11 +45,12 @@ const NewsPage = async ({ params }: { params: Params }) => {
   const parsedContent = md.render(news.content);
 
   return (
-    <main className="container mx-auto px-4 py-8 max-w-7xl">
-      <article className="prose prose-lg max-w-none">
-        <h1 className="text-3xl md:text-4xl font-bold mb-6">{news.title}</h1>
+    <section className="section-container section-pt-small section-pb">
+      <article className="flex flex-col gap-6 relative">
+        <div id="hero" className="absolute -top-16" />
+        <h1 className="text-3xl md:text-4xl font-bold">{news.title}</h1>
 
-        <div className="relative w-full h-[300px] md:h-[400px] mb-8">
+        <div className="relative w-full h-[300px] md:h-[400px]">
           <Image
             src={news.mainImage}
             alt={news.title}
@@ -59,11 +61,11 @@ const NewsPage = async ({ params }: { params: Params }) => {
         </div>
 
         <div
-          className="mt-8"
+          className="prose prose-lg max-w-none"
           dangerouslySetInnerHTML={{ __html: parsedContent }}
         />
       </article>
-    </main>
+    </section>
   );
 };
 

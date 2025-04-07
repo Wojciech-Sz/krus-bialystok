@@ -25,6 +25,7 @@ import {
   NewsFormValues,
   updateNews,
 } from "@/lib/actions/news.action";
+import { UploadButton } from "@/lib/utils/uploadthing";
 import { NewsSchema } from "@/lib/validation";
 
 import Preview from "../editor/Preview";
@@ -127,8 +128,8 @@ export default function NewsForm({ initialData }: NewsFormProps) {
   };
 
   return (
-    <div className="flex gap-2 ">
-      <div className="space-y-3 pt-4 sticky h-screen top-0 flex-1 max-w-xl">
+    <div className="flex items-center xl:items-start flex-col xl:flex-row gap-2 ">
+      <div className="space-y-3 pt-4 xl:sticky h-screen top-0 flex-1 max-w-xl">
         <div>
           <h1 className="text-2xl font-bold">
             {initialData ? "Edit News Post" : "Create News Post"}
@@ -196,12 +197,15 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               render={({ field }) => (
                 <FormItem className="col-span-full">
                   <FormLabel>Main Image URL</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="https://example.com/image.jpg"
-                      {...field}
-                    />
-                  </FormControl>
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input
+                        placeholder="https://example.com/image.jpg"
+                        {...field}
+                      />
+                    </FormControl>
+                    <UploadButton endpoint="imageUploader" />
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}

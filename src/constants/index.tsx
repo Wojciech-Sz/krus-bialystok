@@ -4,42 +4,42 @@ import { FacebookIcon, InstagramIcon } from "@/components/icons";
 
 export const navLinks = [
   {
-    name: "Home",
+    name: "Główna",
     href: "/",
-    icon: <Home className="size-7" />,
+    icon: <Home className="size-7 lg:size-5" />,
   },
   {
     name: "Aktualności",
     href: "/#news",
-    icon: <Newspaper className="size-7" />,
+    icon: <Newspaper className="size-7 lg:size-5" />,
   },
   {
     name: "O nas",
     href: "/#about",
-    icon: <UsersRound className="size-7" />,
+    icon: <UsersRound className="size-7 lg:size-5" />,
   },
   {
     name: "Dokumenty",
     href: "/#documents",
-    icon: <File className="size-7" />,
+    icon: <File className="size-7 lg:size-5" />,
   },
   {
     name: "Kontakt",
     href: "/#contact",
-    icon: <ContactRound className="size-7" />,
+    icon: <ContactRound className="size-7 lg:size-5" />,
   },
 ];
 
 export const socialLinks = [
   {
     id: 1,
-    icon: <FacebookIcon className="size-7" />,
+    icon: <FacebookIcon className="size-7 lg:size-5" />,
     href: "https://facebook.com",
     title: "Facebook",
   },
   {
     id: 2,
-    icon: <InstagramIcon className="size-7" />,
+    icon: <InstagramIcon className="size-7 lg:size-5" />,
     href: "https://instagram.com",
     title: "Instagram",
   },

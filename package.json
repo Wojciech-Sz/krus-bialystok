@@ -24,6 +24,7 @@
     "@radix-ui/react-tooltip": "^1.1.8",
     "@tailwindcss/typography": "^0.5.16",
     "@uiw/react-md-editor": "^4.0.4",
+    "@uploadthing/react": "^7.3.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
@@ -44,6 +45,7 @@
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
+    "uploadthing": "^7.6.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {

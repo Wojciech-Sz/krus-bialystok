@@ -100,8 +100,8 @@ const Header = () => {
             className="size-7 text-foreground"
           />
         </button>
-        <Link href={"#hero"} scroll>
-          <h1 className="text-3xl md:text-4xl max-sm:justify-self-center text-primary font-space-grotesk font-bold">
+        <Link href={"#hero"} className="w-max" scroll>
+          <h1 className="text-3xl sm:text-4xl max-sm:justify-self-center text-primary font-space-grotesk font-bold">
             Krus Białystok
           </h1>
         </Link>
