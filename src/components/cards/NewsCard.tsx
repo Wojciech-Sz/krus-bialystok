@@ -14,7 +14,6 @@ const NewsCard: React.FC<NewsCardProps> = ({ slug, mainImage, title }) => {
   return (
     <Link
       href={ROUTES.NEWS(slug)}
-      prefetch={false}
       className={`group relative size-full overflow-hidden rounded-md`}
     >
       <Image

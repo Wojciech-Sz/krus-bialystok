@@ -204,7 +204,14 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                         {...field}
                       />
                     </FormControl>
-                    <UploadButton endpoint="imageUploader" />
+                    <UploadButton
+                      endpoint="imageUploader"
+                      onClientUploadComplete={(res) => {
+                        if (res) {
+                          form.setValue("mainImage", res[0].ufsUrl);
+                        }
+                      }}
+                    />
                   </div>
                   <FormMessage />
                 </FormItem>
