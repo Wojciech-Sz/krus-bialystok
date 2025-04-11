@@ -19,8 +19,8 @@ const Preview = ({
   const parsedContent = md.render(content);
 
   return (
-    <div className="flex-1 flex pt-4 flex-col max-w-3xl mx-auto px-2">
-      <article className="flex flex-col gap-6">
+    <div className="flex flex-1 items-center pt-4 flex-col px-2">
+      <article className="flex items-center max-w-3xl flex-col gap-6">
         <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
 
         {mainImage && (

@@ -74,6 +74,7 @@ export const getNewsBySlug = async (slug: string) => {
       id: news.id,
       title: news.title,
       slug: news.slug,
+      images: news.images,
       mainImage: news.mainImage,
       content: news.content,
     })
@@ -86,9 +87,7 @@ export const getNewsBySlug = async (slug: string) => {
 
 // Schema for news validation
 
-export type NewsFormValues = z.infer<typeof NewsSchema>;
-
-export const createNews = async (values: NewsFormValues) => {
+export const createNews = async (values: z.infer<typeof NewsSchema>) => {
   try {
     const validatedFields = NewsSchema.safeParse(values);
 
@@ -96,7 +95,7 @@ export const createNews = async (values: NewsFormValues) => {
       return { error: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { title, slug, mainImage, content } = validatedFields.data;
+    const { title, slug, mainImage, content, images } = validatedFields.data;
 
     // Check if slug already exists
     const existingNews = await getNewsBySlug(slug);
@@ -109,6 +108,7 @@ export const createNews = async (values: NewsFormValues) => {
       slug,
       mainImage,
       content,
+      images,
     });
 
     // Revalidate the home page and news page to show the latest content
@@ -124,7 +124,10 @@ export const createNews = async (values: NewsFormValues) => {
   }
 };
 
-export const updateNews = async (id: number, values: NewsFormValues) => {
+export const updateNews = async (
+  id: number,
+  values: z.infer<typeof NewsSchema>
+) => {
   try {
     const validatedFields = NewsSchema.safeParse(values);
 
@@ -132,7 +135,7 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
       return { error: validatedFields.error.flatten().fieldErrors };
     }
 
-    const { title, slug, mainImage, content } = validatedFields.data;
+    const { title, slug, mainImage, content, images } = validatedFields.data;
 
     // Check if slug already exists
     const existingNews = await getNewsBySlug(slug);
@@ -154,6 +157,7 @@ export const updateNews = async (id: number, values: NewsFormValues) => {
         slug,
         mainImage,
         content,
+        images,
       })
       .where(eq(news.id, id));
 

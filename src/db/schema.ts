@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   text,
   pgTable,
@@ -14,6 +15,10 @@ export const news = pgTable(
     slug: varchar("slug", { length: 255 }).notNull().unique(),
     title: varchar("title", { length: 255 }).notNull(),
     mainImage: varchar("main_image", { length: 255 }).notNull(),
+    images: text("images")
+      .array()
+      .default(sql`ARRAY[]::text[]`)
+      .notNull(),
     content: text("content").notNull(),
     publishedAt: timestamp("published_at", { withTimezone: true }).defaultNow(),
   },

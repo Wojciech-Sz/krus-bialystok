@@ -2,11 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import MDEditor from "@uiw/react-md-editor";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import slugify from "slugify";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,36 +22,40 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
-import {
-  createNews,
-  NewsFormValues,
-  updateNews,
-} from "@/lib/actions/news.action";
+import { createNews, updateNews } from "@/lib/actions/news.action";
 import { UploadButton } from "@/lib/utils/uploadthing";
 import { NewsSchema } from "@/lib/validation";
 
 import Preview from "../editor/Preview";
 
 interface NewsFormProps {
-  initialData?: NewsFormValues & { id?: number };
+  initialData?: z.infer<typeof NewsSchema> & { id?: number };
 }
 
 export default function NewsForm({ initialData }: NewsFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { triggerRefresh } = useNewsRefresh();
+  const [images, setImages] = useState<string[]>([]);
 
-  const form = useForm<NewsFormValues>({
+  const form = useForm<z.infer<typeof NewsSchema>>({
     resolver: zodResolver(NewsSchema),
     defaultValues: initialData || {
       title: "",
       slug: "",
       mainImage: "",
       content: "",
+      images: [],
     },
   });
 
-  const onSubmit = async (values: NewsFormValues) => {
+  useEffect(() => {
+    if (initialData?.images) {
+      setImages(initialData.images);
+    }
+  }, [initialData?.images]);
+
+  const onSubmit = async (values: z.infer<typeof NewsSchema>) => {
     setIsSubmitting(true);
 
     try {
@@ -69,7 +75,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
 
         Object.entries(errors).forEach(([key, messages]) => {
           if (key !== "_form" && messages && messages.length > 0) {
-            form.setError(key as keyof NewsFormValues, {
+            form.setError(key as keyof z.infer<typeof NewsSchema>, {
               type: "manual",
               message: messages[0],
             });
@@ -128,8 +134,8 @@ export default function NewsForm({ initialData }: NewsFormProps) {
   };
 
   return (
-    <div className="flex items-center xl:items-start flex-col xl:flex-row gap-2 ">
-      <div className="space-y-3 pt-4 xl:sticky h-screen top-0 flex-1 max-w-xl">
+    <div className="flex flex-1 items-center xl:items-start flex-col xl:flex-row gap-2">
+      <div className="space-y-3 overflow-auto px-4 py-4 xl:sticky xl:h-screen flex-1 top-0 max-w-2xl">
         <div>
           <h1 className="text-2xl font-bold">
             {initialData ? "Edit News Post" : "Create News Post"}
@@ -195,7 +201,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               control={form.control}
               name="mainImage"
               render={({ field }) => (
-                <FormItem className="col-span-full">
+                <FormItem className="">
                   <FormLabel>Main Image URL</FormLabel>
                   <div className="flex gap-2">
                     <FormControl>
@@ -217,6 +223,87 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="images"
+              render={() => (
+                <FormItem>
+                  <FormLabel>Images</FormLabel>
+                  <div className="flex flex-col gap-2">
+                    {images.map((image, index) => (
+                      <FormField
+                        key={index}
+                        control={form.control}
+                        name="images"
+                        render={() => (
+                          <FormItem className="flex flex-col items-center gap-2">
+                            <FormControl>
+                              <Input
+                                placeholder="https://example.com/image.jpg"
+                                value={image}
+                                onChange={(e) =>
+                                  setImages((prev) =>
+                                    prev.map((_, i) =>
+                                      i === index ? e.target.value : _
+                                    )
+                                  )
+                                }
+                              />
+                            </FormControl>
+                            {image && (
+                              <Image
+                                src={image}
+                                width={100}
+                                height={100}
+                                alt=""
+                              />
+                            )}
+                            <div className="flex gap-2">
+                              <UploadButton
+                                endpoint="imageUploader"
+                                onClientUploadComplete={(res) => {
+                                  if (res) {
+                                    setImages((prev) =>
+                                      prev.map((_, i) =>
+                                        i === index ? res[0].ufsUrl : _
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => {
+                                  setImages((prev) =>
+                                    prev.filter((_, i) => i !== index)
+                                  );
+                                }}
+                              >
+                                Delete image
+                              </Button>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setImages((prev) => [...prev, ""]);
+                      }}
+                    >
+                      Add Image
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="content"
