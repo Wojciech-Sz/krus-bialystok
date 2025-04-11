@@ -34,12 +34,17 @@ interface NewsFormProps {
   initialData?: z.infer<typeof NewsSchema> & { id?: number };
 }
 
+interface FormErrors {
+  [key: string]: string[];
+}
+
 export default function NewsForm({ initialData }: NewsFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { triggerRefresh } = useNewsRefresh();
   const [images, setImages] = useState<string[]>([]);
   const [deleteTransition, startDeleteTransition] = useTransition();
+  const [manualImageUrl, setManualImageUrl] = useState("");
 
   const form = useForm<z.infer<typeof NewsSchema>>({
     resolver: zodResolver(NewsSchema),
@@ -59,16 +64,26 @@ export default function NewsForm({ initialData }: NewsFormProps) {
     }
   }, [initialData?.images, form]);
 
+  const handleAddManualUrl = () => {
+    if (manualImageUrl && manualImageUrl.trim() !== "") {
+      const newUrl = manualImageUrl.trim();
+      if (!images.includes(newUrl)) {
+        const updatedImages = [...images, newUrl];
+        setImages(updatedImages);
+        form.setValue("images", updatedImages, { shouldValidate: true });
+        setManualImageUrl("");
+      }
+    }
+  };
+
   const onSubmit = async (values: z.infer<typeof NewsSchema>) => {
     setIsSubmitting(true);
-    console.log("Submitting values:", values);
     try {
       const result = initialData?.id
         ? await updateNews(initialData.id, values)
         : await createNews(values);
 
       if (result.error) {
-        // Handle validation errors
         const errors = result.error as FormErrors;
 
         if (errors._form) {
@@ -100,7 +115,6 @@ export default function NewsForm({ initialData }: NewsFormProps) {
         </div>
       );
 
-      // Reset form if creating a new post
       if (!initialData) {
         setImages([]);
         form.reset({
@@ -110,12 +124,9 @@ export default function NewsForm({ initialData }: NewsFormProps) {
           content: "",
           images: [],
         });
-        // Trigger refresh after creating a new post
         triggerRefresh();
       } else {
-        // For updates, trigger refresh first, then navigate
         triggerRefresh();
-        // Small delay to ensure the refresh is processed before navigation
         await new Promise((resolve) => setTimeout(resolve, 200));
         router.push("/studio");
       }
@@ -238,78 +249,158 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                   <FormLabel>Images</FormLabel>
                   <div className="flex flex-col gap-2">
                     {images.map((image, index) => (
-                      <FormField
-                        key={image}
-                        control={form.control}
-                        name="images"
-                        render={() => (
-                          <FormItem className="flex flex-col items-center gap-2">
-                            <FormControl>
-                              <Input
-                                placeholder="https://example.com/image.jpg"
-                                value={image}
-                                onChange={(e) =>
-                                  setImages((prev) =>
-                                    prev.map((_, i) =>
-                                      i === index ? e.target.value : _
-                                    )
-                                  )
-                                }
-                              />
-                            </FormControl>
-                            {image && (
-                              <Image
-                                src={image}
-                                width={100}
-                                height={100}
-                                alt=""
-                              />
-                            )}
-
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              type="button"
-                              disabled={deleteTransition}
-                              onClick={async () => {
-                                startDeleteTransition(async () => {
-                                  const imageUrlToDelete = image;
-                                  const fileKey =
-                                    extractIdentifierFromUrl(imageUrlToDelete);
-                                  if (fileKey) {
-                                    await deleteFile(fileKey);
-                                  }
-                                  const updatedImages = images.filter(
-                                    (_, i) => i !== index
-                                  );
-                                  setImages(updatedImages);
-                                  form.setValue("images", updatedImages);
+                      <div
+                        key={index}
+                        className="flex w-full items-end gap-2 border p-2 rounded mb-2"
+                      >
+                        <FormItem className="flex-grow h-full">
+                          <FormLabel className="text-xs">
+                            Image URL {index + 1}
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com/image.jpg"
+                              value={image}
+                              onChange={(e) => {
+                                const updatedImages = images.map((img, i) =>
+                                  i === index ? e.target.value : img
+                                );
+                                setImages(updatedImages);
+                                form.setValue("images", updatedImages, {
+                                  shouldValidate: true,
                                 });
                               }}
-                            >
-                              {deleteTransition ? "Deleting..." : "Delete"}
-                            </Button>
-                          </FormItem>
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                        {image && (
+                          <Image
+                            src={image}
+                            width={60}
+                            height={60}
+                            alt={`Preview ${index + 1}`}
+                            className="object-cover rounded aspect-square"
+                            onError={(e) => {
+                              e.currentTarget.src = "/placeholder.png";
+                              e.currentTarget.onerror = null;
+                            }}
+                          />
                         )}
-                      />
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            type="button"
+                            disabled={deleteTransition}
+                            onClick={async () => {
+                              startDeleteTransition(async () => {
+                                const imageUrlToDelete = image;
+                                const fileKey =
+                                  extractIdentifierFromUrl(imageUrlToDelete);
+                                if (fileKey) {
+                                  try {
+                                    await deleteFile(fileKey);
+                                  } catch (error) {
+                                    console.warn(
+                                      "Failed to delete file from storage:",
+                                      error
+                                    );
+                                  }
+                                }
+                                const updatedImages = images.filter(
+                                  (_, i) => i !== index
+                                );
+                                setImages(updatedImages);
+                                form.setValue("images", updatedImages, {
+                                  shouldValidate: true,
+                                });
+                              });
+                            }}
+                          >
+                            Delete from cloud
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            type="button"
+                            onClick={() => {
+                              const updatedImages = images.filter(
+                                (_, i) => i !== index
+                              );
+                              setImages(updatedImages);
+                              form.setValue("images", updatedImages, {
+                                shouldValidate: true,
+                              });
+                            }}
+                          >
+                            Delete from database
+                          </Button>
+                        </div>
+                      </div>
                     ))}
-                    <UploadButton
-                      endpoint="imageUploader"
-                      onClientUploadComplete={(res) => {
-                        if (res) {
-                          const newImageUrl = res[0].ufsUrl;
-                          const updatedImages = [...images, newImageUrl];
-                          setImages(updatedImages);
-                          form.setValue("images", updatedImages);
-                        }
-                      }}
-                    />
+
+                    <div className="flex items-end gap-2 mt-4 border-t pt-4">
+                      <FormItem className="flex-grow">
+                        <FormLabel className="text-xs">
+                          Add Image URL Manually
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://new-image.com/pic.jpg"
+                            value={manualImageUrl}
+                            onChange={(e) => setManualImageUrl(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleAddManualUrl();
+                              }
+                            }}
+                          />
+                        </FormControl>
+                      </FormItem>
+                      <Button
+                        type="button"
+                        onClick={handleAddManualUrl}
+                        size="sm"
+                      >
+                        Add URL
+                      </Button>
+                    </div>
+
+                    <div className="mt-4 border-t pt-4">
+                      <FormLabel className="text-xs mb-2 block">
+                        Or Upload Image
+                      </FormLabel>
+                      <UploadButton
+                        appearance={{
+                          button:
+                            "ut-ready:bg-green-500 ut-uploading:cursor-not-allowed bg-primary text-primary-foreground after:bg-primary",
+                          allowedContent: "hidden",
+                        }}
+                        endpoint="imageUploader"
+                        onClientUploadComplete={(res) => {
+                          if (res) {
+                            const newImageUrl = res[0].ufsUrl;
+                            if (!images.includes(newImageUrl)) {
+                              const updatedImages = [...images, newImageUrl];
+                              setImages(updatedImages);
+                              form.setValue("images", updatedImages, {
+                                shouldValidate: true,
+                              });
+                            }
+                          }
+                        }}
+                        onUploadError={(error: Error) => {
+                          alert(`ERROR! ${error.message}`);
+                        }}
+                      />
+                    </div>
                   </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
             <FormField
               control={form.control}
               name="content"
