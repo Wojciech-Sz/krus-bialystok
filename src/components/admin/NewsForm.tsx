@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import MDEditor from "@uiw/react-md-editor";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import slugify from "slugify";
 import { toast } from "sonner";
@@ -23,6 +23,8 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
 import { createNews, updateNews } from "@/lib/actions/news.action";
+import { deleteFile } from "@/lib/actions/uploadthing.action";
+import { extractIdentifierFromUrl } from "@/lib/utils";
 import { UploadButton } from "@/lib/utils/uploadthing";
 import { NewsSchema } from "@/lib/validation";
 
@@ -37,6 +39,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { triggerRefresh } = useNewsRefresh();
   const [images, setImages] = useState<string[]>([]);
+  const [deleteTransition, startDeleteTransition] = useTransition();
 
   const form = useForm<z.infer<typeof NewsSchema>>({
     resolver: zodResolver(NewsSchema),
@@ -52,12 +55,13 @@ export default function NewsForm({ initialData }: NewsFormProps) {
   useEffect(() => {
     if (initialData?.images) {
       setImages(initialData.images);
+      form.setValue("images", initialData.images);
     }
-  }, [initialData?.images]);
+  }, [initialData?.images, form]);
 
   const onSubmit = async (values: z.infer<typeof NewsSchema>) => {
     setIsSubmitting(true);
-
+    console.log("Submitting values:", values);
     try {
       const result = initialData?.id
         ? await updateNews(initialData.id, values)
@@ -98,11 +102,13 @@ export default function NewsForm({ initialData }: NewsFormProps) {
 
       // Reset form if creating a new post
       if (!initialData) {
+        setImages([]);
         form.reset({
           title: "",
           slug: "",
           mainImage: "",
           content: "",
+          images: [],
         });
         // Trigger refresh after creating a new post
         triggerRefresh();
@@ -233,7 +239,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                   <div className="flex flex-col gap-2">
                     {images.map((image, index) => (
                       <FormField
-                        key={index}
+                        key={image}
                         control={form.control}
                         name="images"
                         render={() => (
@@ -259,45 +265,45 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                                 alt=""
                               />
                             )}
-                            <div className="flex gap-2">
-                              <UploadButton
-                                endpoint="imageUploader"
-                                onClientUploadComplete={(res) => {
-                                  if (res) {
-                                    setImages((prev) =>
-                                      prev.map((_, i) =>
-                                        i === index ? res[0].ufsUrl : _
-                                      )
-                                    );
+
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              type="button"
+                              disabled={deleteTransition}
+                              onClick={async () => {
+                                startDeleteTransition(async () => {
+                                  const imageUrlToDelete = image;
+                                  const fileKey =
+                                    extractIdentifierFromUrl(imageUrlToDelete);
+                                  if (fileKey) {
+                                    await deleteFile(fileKey);
                                   }
-                                }}
-                              />
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                  setImages((prev) =>
-                                    prev.filter((_, i) => i !== index)
+                                  const updatedImages = images.filter(
+                                    (_, i) => i !== index
                                   );
-                                }}
-                              >
-                                Delete image
-                              </Button>
-                            </div>
+                                  setImages(updatedImages);
+                                  form.setValue("images", updatedImages);
+                                });
+                              }}
+                            >
+                              {deleteTransition ? "Deleting..." : "Delete"}
+                            </Button>
                           </FormItem>
                         )}
                       />
                     ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setImages((prev) => [...prev, ""]);
+                    <UploadButton
+                      endpoint="imageUploader"
+                      onClientUploadComplete={(res) => {
+                        if (res) {
+                          const newImageUrl = res[0].ufsUrl;
+                          const updatedImages = [...images, newImageUrl];
+                          setImages(updatedImages);
+                          form.setValue("images", updatedImages);
+                        }
                       }}
-                    >
-                      Add Image
-                    </Button>
+                    />
                   </div>
                   <FormMessage />
                 </FormItem>
