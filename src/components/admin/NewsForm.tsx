@@ -2,13 +2,13 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import MDEditor from "@uiw/react-md-editor";
-import Image from "next/image";
+import { Check, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import slugify from "slugify";
 import { toast } from "sonner";
-import { z } from "zod";
+import * as z from "zod";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +22,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
-import { createNews, updateNews } from "@/lib/actions/news.action";
+import {
+  createNews,
+  updateNews,
+  updateNewsImages,
+} from "@/lib/actions/news.action";
 import { deleteFile } from "@/lib/actions/uploadthing.action";
 import { extractIdentifierFromUrl } from "@/lib/utils";
 import { UploadButton } from "@/lib/utils/uploadthing";
@@ -31,7 +35,7 @@ import { NewsSchema } from "@/lib/validation";
 import Preview from "../editor/Preview";
 
 interface NewsFormProps {
-  initialData?: z.infer<typeof NewsSchema> & { id?: number };
+  initialData?: z.infer<typeof NewsSchema> & { id: number };
 }
 
 interface FormErrors {
@@ -42,9 +46,8 @@ export default function NewsForm({ initialData }: NewsFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { triggerRefresh } = useNewsRefresh();
-  const [images, setImages] = useState<string[]>([]);
   const [deleteTransition, startDeleteTransition] = useTransition();
-  const [manualImageUrl, setManualImageUrl] = useState("");
+  const [copiedStatus, setCopiedStatus] = useState<Record<number, boolean>>({}); // State for copy feedback
 
   const form = useForm<z.infer<typeof NewsSchema>>({
     resolver: zodResolver(NewsSchema),
@@ -59,22 +62,9 @@ export default function NewsForm({ initialData }: NewsFormProps) {
 
   useEffect(() => {
     if (initialData?.images) {
-      setImages(initialData.images);
       form.setValue("images", initialData.images);
     }
   }, [initialData?.images, form]);
-
-  const handleAddManualUrl = () => {
-    if (manualImageUrl && manualImageUrl.trim() !== "") {
-      const newUrl = manualImageUrl.trim();
-      if (!images.includes(newUrl)) {
-        const updatedImages = [...images, newUrl];
-        setImages(updatedImages);
-        form.setValue("images", updatedImages, { shouldValidate: true });
-        setManualImageUrl("");
-      }
-    }
-  };
 
   const onSubmit = async (values: z.infer<typeof NewsSchema>) => {
     setIsSubmitting(true);
@@ -87,7 +77,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
         const errors = result.error as FormErrors;
 
         if (errors._form) {
-          toast.error("Something went wrong. Please try again.", {
+          toast.error("Coś poszło nie tak. Proszę spróbować ponownie.", {
             description: errors._form[0],
           });
         }
@@ -106,17 +96,15 @@ export default function NewsForm({ initialData }: NewsFormProps) {
 
       toast.success(
         <div>
-          <p>{initialData ? "News updated" : "News created"}</p>
-          <p className="text-muted-foreground">
+          <p>
             {initialData
-              ? "Your news post has been updated."
-              : "Your news post has been created."}
+              ? "Post zaktualizowany pomyślnie"
+              : "Post utworzony pomyślnie"}
           </p>
         </div>
       );
 
       if (!initialData) {
-        setImages([]);
         form.reset({
           title: "",
           slug: "",
@@ -133,7 +121,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
     } catch (error) {
       toast.error(
         <div>
-          <p>Something went wrong. Please try again.</p>
+          <p>Coś poszło nie tak. Proszę spróbować ponownie.</p>
           <p className="text-muted-foreground">{String(error)}</p>
         </div>
       );
@@ -150,17 +138,65 @@ export default function NewsForm({ initialData }: NewsFormProps) {
     }
   };
 
+  const handleUpdateImages = async () => {
+    if (!initialData) return;
+    const result = await updateNewsImages({
+      id: initialData.id,
+      images: form.getValues("images"),
+    });
+
+    if (result.error) {
+      const errors = result.error as FormErrors;
+
+      if (errors._form) {
+        toast.error("Coś poszło nie tak. Proszę spróbować ponownie.", {
+          description: errors._form[0],
+        });
+      }
+
+      Object.entries(errors).forEach(([key, messages]) => {
+        if (key !== "_form" && messages && messages.length > 0) {
+          form.setError(key as keyof z.infer<typeof NewsSchema>, {
+            type: "manual",
+            message: messages[0],
+          });
+        }
+      });
+
+      throw new Error("Failed to update news images");
+    }
+
+    toast.success("Zdjęcia zaktualizowane pomyślnie");
+  };
+
+  // Function to handle copying
+  const handleCopy = (textToCopy: string, index: number) => {
+    navigator.clipboard.writeText(textToCopy).then(
+      () => {
+        setCopiedStatus({ ...copiedStatus, [index]: true });
+        toast.success("Link skopiowany do schowka!");
+        setTimeout(() => {
+          setCopiedStatus({ ...copiedStatus, [index]: false });
+        }, 2000); // Reset after 2 seconds
+      },
+      (err) => {
+        console.error("Could not copy text: ", err);
+        toast.error("Nie udało się skopiować linku.");
+      }
+    );
+  };
+
   return (
     <div className="flex flex-1 items-center xl:items-start flex-col xl:flex-row gap-2">
       <div className="space-y-3 overflow-auto px-4 py-4 xl:sticky xl:h-screen flex-1 top-0 max-w-2xl">
         <div>
           <h1 className="text-2xl font-bold">
-            {initialData ? "Edit News Post" : "Create News Post"}
+            {initialData ? "Edytuj post" : "Utwórz post"}
           </h1>
           <p className="text-sm text-muted-foreground">
             {initialData
-              ? "Update your news post information."
-              : "Create a new news post for your website."}
+              ? "Zaktualizuj informacje o swoim poście."
+              : "Utwórz nowy post dla swojej strony internetowej."}
           </p>
         </div>
         <Separator />
@@ -174,10 +210,10 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Tytuł</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="News title"
+                      placeholder="Wprowadź tytuł..."
                       {...field}
                       onBlur={() => {
                         field.onBlur();
@@ -199,7 +235,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                   <FormLabel>Slug</FormLabel>
                   <div className="flex items-center gap-2">
                     <FormControl>
-                      <Input placeholder="news-slug" {...field} />
+                      <Input placeholder="np. przykladowy-tytul" {...field} />
                     </FormControl>
                     <Button
                       type="button"
@@ -207,7 +243,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                       size="sm"
                       onClick={generateSlug}
                     >
-                      Generate
+                      Wygeneruj
                     </Button>
                   </div>
                   <FormMessage />
@@ -219,15 +255,21 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               name="mainImage"
               render={({ field }) => (
                 <FormItem className="">
-                  <FormLabel>Main Image URL</FormLabel>
-                  <div className="flex gap-2">
+                  <FormLabel>Główne zdjęcie</FormLabel>
+                  <div className="flex gap-2 items-center">
                     <FormControl>
                       <Input
                         placeholder="https://example.com/image.jpg"
+                        readOnly
                         {...field}
                       />
                     </FormControl>
                     <UploadButton
+                      appearance={{
+                        button:
+                          "ut-ready:bg-primary ut-uploading:cursor-not-allowed text-primary-foreground ",
+                        allowedContent: "hidden",
+                      }}
                       endpoint="imageUploader"
                       onClientUploadComplete={(res) => {
                         if (res) {
@@ -246,45 +288,47 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               name="images"
               render={() => (
                 <FormItem>
-                  <FormLabel>Images</FormLabel>
+                  <FormLabel>Zdjęcia</FormLabel>
                   <div className="flex flex-col gap-2">
-                    {images.map((image, index) => (
+                    {form.watch("images").map((image, index) => (
                       <div
                         key={index}
-                        className="flex w-full items-end gap-2 border p-2 rounded mb-2"
+                        className="flex w-full items-center gap-2 border p-2 rounded mb-2"
                       >
-                        <FormItem className="flex-grow h-full">
-                          <FormLabel className="text-xs">
-                            Image URL {index + 1}
-                          </FormLabel>
+                        <FormItem className="flex-1">
                           <FormControl>
                             <Input
                               placeholder="https://example.com/image.jpg"
                               value={image}
-                              onChange={(e) => {
-                                const updatedImages = images.map((img, i) =>
-                                  i === index ? e.target.value : img
-                                );
-                                setImages(updatedImages);
-                                form.setValue("images", updatedImages, {
-                                  shouldValidate: true,
-                                });
-                              }}
+                              readOnly
+                              className="bg-muted/50 cursor-default" // Slightly different bg for readOnly
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
+                        {/* Copy Button */}
+                        <Button
+                          type="button" // Prevent form submission
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleCopy(image, index)}
+                          className="shrink-0"
+                        >
+                          {copiedStatus[index] ? (
+                            <Check className="text-green-500" />
+                          ) : (
+                            <Copy />
+                          )}
+                        </Button>
                         {image && (
-                          <Image
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
                             src={image}
                             width={60}
                             height={60}
+                            loading="lazy"
                             alt={`Preview ${index + 1}`}
                             className="object-cover rounded aspect-square"
-                            onError={(e) => {
-                              e.currentTarget.src = "/placeholder.png";
-                              e.currentTarget.onerror = null;
-                            }}
                           />
                         )}
                         <div className="flex flex-col gap-1">
@@ -308,96 +352,64 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                                     );
                                   }
                                 }
-                                const updatedImages = images.filter(
-                                  (_, i) => i !== index
-                                );
-                                setImages(updatedImages);
+                                const updatedImages = form
+                                  .watch("images")
+                                  .filter((_, i) => i !== index);
                                 form.setValue("images", updatedImages, {
                                   shouldValidate: true,
                                 });
+                                handleUpdateImages();
                               });
                             }}
                           >
-                            Delete from cloud
+                            {deleteTransition ? "Usuwanie..." : "Usuń z chmury"}
                           </Button>
                           <Button
                             variant="destructive"
                             size="sm"
                             type="button"
                             onClick={() => {
-                              const updatedImages = images.filter(
-                                (_, i) => i !== index
-                              );
-                              setImages(updatedImages);
+                              const updatedImages = form
+                                .watch("images")
+                                .filter((_, i) => i !== index);
                               form.setValue("images", updatedImages, {
                                 shouldValidate: true,
                               });
                             }}
                           >
-                            Delete from database
+                            Usuń z bazy danych
                           </Button>
                         </div>
                       </div>
                     ))}
 
-                    <div className="flex items-end gap-2 mt-4 border-t pt-4">
-                      <FormItem className="flex-grow">
-                        <FormLabel className="text-xs">
-                          Add Image URL Manually
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="https://new-image.com/pic.jpg"
-                            value={manualImageUrl}
-                            onChange={(e) => setManualImageUrl(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleAddManualUrl();
-                              }
-                            }}
-                          />
-                        </FormControl>
-                      </FormItem>
-                      <Button
-                        type="button"
-                        onClick={handleAddManualUrl}
-                        size="sm"
-                      >
-                        Add URL
-                      </Button>
-                    </div>
-
-                    <div className="mt-4 border-t pt-4">
-                      <FormLabel className="text-xs mb-2 block">
-                        Or Upload Image
-                      </FormLabel>
-                      <UploadButton
-                        appearance={{
-                          button:
-                            "ut-ready:bg-green-500 ut-uploading:cursor-not-allowed bg-primary text-primary-foreground after:bg-primary",
-                          allowedContent: "hidden",
-                        }}
-                        endpoint="imageUploader"
-                        onClientUploadComplete={(res) => {
-                          if (res) {
-                            const newImageUrl = res[0].ufsUrl;
-                            if (!images.includes(newImageUrl)) {
-                              const updatedImages = [...images, newImageUrl];
-                              setImages(updatedImages);
-                              form.setValue("images", updatedImages, {
-                                shouldValidate: true,
-                              });
-                            }
+                    <UploadButton
+                      appearance={{
+                        button:
+                          "ut-ready:bg-primary ut-uploading:cursor-not-allowed text-primary-foreground ",
+                        allowedContent: "hidden",
+                      }}
+                      endpoint="imageUploader"
+                      onClientUploadComplete={(res) => {
+                        if (res) {
+                          const newImageUrl = res[0].ufsUrl;
+                          if (!form.watch("images").includes(newImageUrl)) {
+                            const updatedImages = [
+                              ...form.watch("images"),
+                              newImageUrl,
+                            ];
+                            form.setValue("images", updatedImages, {
+                              shouldValidate: true,
+                            });
                           }
-                        }}
-                        onUploadError={(error: Error) => {
-                          alert(`ERROR! ${error.message}`);
-                        }}
-                      />
-                    </div>
+                          handleUpdateImages();
+                        }
+                      }}
+                      onUploadError={(error: Error) => {
+                        alert(`ERROR! ${error.message}`);
+                      }}
+                    />
                   </div>
-                  <FormMessage />
                 </FormItem>
               )}
             />
@@ -406,7 +418,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               name="content"
               render={() => (
                 <FormItem>
-                  <FormLabel>Content</FormLabel>
+                  <FormLabel>Treść</FormLabel>
                   <FormControl>
                     <div data-color-mode="light">
                       <MDEditor
@@ -419,7 +431,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                         height={300}
                         style={{ borderRadius: 10, overflow: "hidden" }}
                         textareaProps={{
-                          placeholder: "Enter news content here...",
+                          placeholder: "Wprowadź treść posta...",
                         }}
                         previewOptions={{
                           disallowedElements: ["style"],
@@ -436,18 +448,24 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  form.reset();
+                  form.reset({
+                    title: initialData?.title || "",
+                    slug: initialData?.slug || "",
+                    mainImage: initialData?.mainImage || "",
+                    content: initialData?.content || "",
+                    images: form.watch("images"),
+                  });
                 }}
                 disabled={isSubmitting}
               >
-                Cancel
+                Anuluj
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? "Saving..."
+                  ? "Zapisywanie..."
                   : initialData
-                    ? "Update News"
-                    : "Create News"}
+                    ? "Zapisz zmiany"
+                    : "Utwórz post"}
               </Button>
             </div>
           </form>

@@ -191,3 +191,40 @@ export const deleteNews = async (slug: string) => {
     return { error: { _form: ["Failed to delete news. Please try again."] } };
   }
 };
+
+// Schema for updating images only
+const UpdateNewsImagesSchema = z.object({
+  id: z.number(),
+  images: z.array(z.string().url()),
+});
+
+export const updateNewsImages = async (values: z.infer<typeof UpdateNewsImagesSchema>) => {
+  try {
+    const validatedFields = UpdateNewsImagesSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+      return { error: validatedFields.error.flatten().fieldErrors };
+    }
+
+    const { id, images } = validatedFields.data;
+
+    // Make sure the news item exists before updating
+    const newsToUpdate = await getNewsById(id);
+    if (!newsToUpdate) {
+      return { error: { _form: ["News item not found"] } };
+    }
+
+    // Update the images field
+    await db.update(news).set({ images }).where(eq(news.id, id));
+
+    // Revalidate the specific news page
+    revalidatePath(`/news/${newsToUpdate.slug}`);
+
+    return { success: true };
+  } catch (error) {
+    logger.error("Error updating news images:", error);
+    return {
+      error: { _form: ["Failed to update news images. Please try again."] },
+    };
+  }
+};

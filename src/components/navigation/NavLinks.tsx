@@ -9,9 +9,9 @@ const NavLinks = () => {
   return (
     <nav
       role="navigation"
-      className="sm:flex justify-self-center hidden gap-2 "
+      className="md:flex justify-self-center hidden gap-2 "
     >
-      <ul className="flex items-center gap-2">
+      <ul className="flex items-center gap-1 xl:gap-1.5">
         {navLinks.map((link) => (
           <li
             key={link.name}

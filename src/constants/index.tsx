@@ -33,13 +33,13 @@ export const navLinks = [
 export const socialLinks = [
   {
     id: 1,
-    icon: <FacebookIcon className="size-7 lg:size-5" />,
+    icon: <FacebookIcon className="size-7 xl:size-5" />,
     href: "https://facebook.com",
     title: "Facebook",
   },
   {
     id: 2,
-    icon: <InstagramIcon className="size-7 lg:size-5" />,
+    icon: <InstagramIcon className="size-7 xl:size-5" />,
     href: "https://instagram.com",
     title: "Instagram",
   },

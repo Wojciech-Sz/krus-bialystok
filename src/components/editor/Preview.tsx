@@ -1,4 +1,4 @@
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -24,13 +24,11 @@ const Preview = ({
         <h1 className="text-3xl md:text-4xl font-bold">{title}</h1>
 
         {mainImage && (
-          <div className="relative w-full h-[300px] md:h-[400px]">
-            <Image
+          <div className="w-full h-[300px] md:h-[400px]">
+            <img
               src={mainImage}
               alt={title}
-              fill
-              className="object-cover rounded-lg"
-              priority
+              className="object-cover size-full rounded-lg"
             />
           </div>
         )}
