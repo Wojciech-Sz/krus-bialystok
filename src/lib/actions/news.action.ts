@@ -198,7 +198,9 @@ const UpdateNewsImagesSchema = z.object({
   images: z.array(z.string().url()),
 });
 
-export const updateNewsImages = async (values: z.infer<typeof UpdateNewsImagesSchema>) => {
+export const updateNewsImages = async (
+  values: z.infer<typeof UpdateNewsImagesSchema>
+) => {
   try {
     const validatedFields = UpdateNewsImagesSchema.safeParse(values);
 

@@ -37,3 +37,5 @@ interface SidebarNewsItem {
   title: string;
   slug: string;
 }
+
+type PageParams = Promise<{ page: string }>;

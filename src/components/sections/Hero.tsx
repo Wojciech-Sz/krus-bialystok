@@ -48,7 +48,7 @@ const Hero = () => {
   }, []);
 
   return (
-    <section className="relative h-[clamp(40vh,50svh,50vh)] w-full overflow-hidden px-5 sm:px-10">
+    <section className="relative h-[50vh] w-full overflow-hidden px-5 sm:px-10">
       <div id="hero" className="absolute -top-16" />
       {heroImages.map((image, i) => (
         <Image
