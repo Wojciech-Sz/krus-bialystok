@@ -7,9 +7,6 @@ import { getNewsBySlug } from "@/lib/actions/news.action";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const MarkdownIt = require("markdown-it");
 
-// Define the cache configuration
-export const revalidate = 3600; // Revalidate at most every hour
-
 export async function generateMetadata({ params }: { params: Params }) {
   const { slug } = await params;
   const news = await getNewsBySlug(slug!);

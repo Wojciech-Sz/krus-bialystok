@@ -1,7 +1,7 @@
 "use server";
 
 import { count, eq, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db/drizzle";
@@ -10,80 +10,100 @@ import { NewsSchema } from "@/lib/validation";
 
 import logger from "../logger";
 
-export const getNewsListing = async (page: number) => {
-  return db
-    .select({
-      slug: news.slug,
-      title: news.title,
-      mainImage: news.mainImage,
-    })
-    .from(news)
-    .orderBy(sql`${news.publishedAt} desc`)
-    .limit(6)
-    .offset((page - 1) * 6);
-};
+export const getNewsListing = unstable_cache(
+  async (page: number) => {
+    return db
+      .select({
+        slug: news.slug,
+        title: news.title,
+        mainImage: news.mainImage,
+      })
+      .from(news)
+      .orderBy(sql`${news.publishedAt} desc`)
+      .limit(6)
+      .offset((page - 1) * 6);
+  },
+  ["news-listing"],
+  { tags: ["news"] }
+);
 
-export const getNewsSidebar = async (page: number, search?: string) => {
-  if (search) {
+export const getNewsSidebar = unstable_cache(
+  async (page: number, search?: string) => {
+    if (search) {
+      return db
+        .select({
+          slug: news.slug,
+          title: news.title,
+        })
+        .from(news)
+        .where(sql`${news.title} ILIKE ${`%${search}%`}`)
+        .orderBy(sql`${news.publishedAt} desc`)
+        .limit(6)
+        .offset((page - 1) * 6);
+    }
+
     return db
       .select({
         slug: news.slug,
         title: news.title,
       })
       .from(news)
-      .where(sql`${news.title} ILIKE ${`%${search}%`}`)
       .orderBy(sql`${news.publishedAt} desc`)
       .limit(6)
       .offset((page - 1) * 6);
-  }
+  },
+  ["news-sidebar"],
+  { tags: ["news"] }
+);
 
-  return db
-    .select({
-      slug: news.slug,
-      title: news.title,
-    })
-    .from(news)
-    .orderBy(sql`${news.publishedAt} desc`)
-    .limit(6)
-    .offset((page - 1) * 6);
-};
+export const getNewsCount = unstable_cache(
+  async (search?: string) => {
+    if (search) {
+      return db
+        .select({ count: count() })
+        .from(news)
+        .where(sql`${news.title} ILIKE ${`%${search}%`}`);
+    }
 
-export const getNewsCount = async (search?: string) => {
-  if (search) {
-    return db
-      .select({ count: count() })
+    return db.select({ count: count() }).from(news);
+  },
+  ["news-count"],
+  { tags: ["news"] }
+);
+
+export const getNewsById = unstable_cache(
+  async (id: number) => {
+    const result = await db
+      .select({ slug: news.slug })
       .from(news)
-      .where(sql`${news.title} ILIKE ${`%${search}%`}`);
-  }
+      .where(eq(news.id, id))
+      .limit(1);
+    return result[0];
+  },
+  ["news-by-id"],
+  { tags: ["news"] }
+);
 
-  return db.select({ count: count() }).from(news);
-};
+export const getNewsBySlug = unstable_cache(
+  async (slug: string) => {
+    const result = await db
+      .select({
+        id: news.id,
+        title: news.title,
+        slug: news.slug,
+        images: news.images,
+        mainImage: news.mainImage,
+        content: news.content,
+      })
+      .from(news)
+      .where(eq(news.slug, slug))
+      .limit(1);
 
-export const getNewsById = async (id: number) => {
-  const result = await db
-    .select({ slug: news.slug })
-    .from(news)
-    .where(eq(news.id, id))
-    .limit(1);
-  return result[0];
-};
-
-export const getNewsBySlug = async (slug: string) => {
-  const result = await db
-    .select({
-      id: news.id,
-      title: news.title,
-      slug: news.slug,
-      images: news.images,
-      mainImage: news.mainImage,
-      content: news.content,
-    })
-    .from(news)
-    .where(eq(news.slug, slug))
-    .limit(1);
-
-  return result[0];
-};
+    return result[0];
+  },
+  ["news-by-slug"],
+  { tags: ["news"] }
+);
 
 // Schema for news validation
 
@@ -111,9 +131,8 @@ export const createNews = async (values: z.infer<typeof NewsSchema>) => {
       images,
     });
 
-    // Revalidate the home page and news page to show the latest content
-    revalidatePath("/");
-    revalidatePath(`/news/${slug}`);
+    // Revalidate the news tag
+    revalidateTag("news");
 
     return { success: true };
   } catch (error) {
@@ -161,13 +180,12 @@ export const updateNews = async (
       })
       .where(eq(news.id, id));
 
-    // Revalidate the home page and the specific news page
-    revalidatePath("/");
-    revalidatePath(`/news/${slug}`);
+    // Revalidate the news tag
+    revalidateTag("news");
 
-    // If the slug was changed, also revalidate the old slug path
+    // If the slug was changed, also revalidate the news tag
     if (newsToUpdate.slug !== slug) {
-      revalidatePath(`/news/${newsToUpdate.slug}`);
+      revalidateTag("news");
     }
 
     return { success: true };
@@ -181,9 +199,8 @@ export const deleteNews = async (slug: string) => {
   try {
     await db.delete(news).where(eq(news.slug, slug));
 
-    // Revalidate the home page and the specific news page
-    revalidatePath("/");
-    revalidatePath(`/news/${slug}`);
+    // Revalidate the news tag
+    revalidateTag("news");
 
     return { success: true };
   } catch (error) {
@@ -219,8 +236,8 @@ export const updateNewsImages = async (
     // Update the images field
     await db.update(news).set({ images }).where(eq(news.id, id));
 
-    // Revalidate the specific news page
-    revalidatePath(`/news/${newsToUpdate.slug}`);
+    // Revalidate the news tag
+    revalidateTag("news");
 
     return { success: true };
   } catch (error) {

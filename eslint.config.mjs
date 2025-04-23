@@ -63,6 +63,10 @@ const config = [
 
     rules: {
       "no-undef": "off",
+      "camelcase": [
+        "error",
+        { ignoreImports: true }
+      ],
     },
   },
 ];
