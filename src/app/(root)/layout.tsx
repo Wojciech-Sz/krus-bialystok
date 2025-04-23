@@ -11,7 +11,7 @@ export default function RootLayout({
   return (
     <section className="flex min-h-screen flex-col">
       <Header />
-      <main className="flex flex-1 flex-col items-center">{children}</main>
+      <main className="flex flex-col items-center">{children}</main>
       <Footer />
     </section>
   );

@@ -261,6 +261,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                       <Input
                         placeholder="https://example.com/image.jpg"
                         readOnly
+                        className="bg-muted/50 cursor-default"
                         {...field}
                       />
                     </FormControl>
