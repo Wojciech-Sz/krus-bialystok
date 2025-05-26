@@ -268,7 +268,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                     <UploadButton
                       appearance={{
                         button:
-                          "ut-ready:bg-primary ut-uploading:cursor-not-allowed text-primary-foreground ",
+                          "ut-ready:bg-primary ut-uploading:cursor-not-allowed text-primary-foreground",
                         allowedContent: "hidden",
                       }}
                       endpoint="imageUploader"
@@ -387,7 +387,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                     <UploadButton
                       appearance={{
                         button:
-                          "ut-ready:bg-primary ut-uploading:cursor-not-allowed text-primary-foreground ",
+                          "ut-ready:bg-primary ut-uploading:cursor-not-allowed text-primary-foreground",
                         allowedContent: "hidden",
                       }}
                       endpoint="imageUploader"

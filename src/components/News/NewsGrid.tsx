@@ -6,8 +6,9 @@ import NewsCard from "./NewsCard";
 
 const NewsGrid = async ({ page = 1 }: { page: number }) => {
   const news = await getNewsListing(page);
+  const newsCount = news.length;
   return (
-    <div className="news-grid h-[150svh] sm:h-[75svh]">
+    <div className={`news-grid ${newsCount <= 3 && "h-[75dvh] min-h-[400px]"}`}>
       {news &&
         news.map((newsItem) => (
           <NewsCard

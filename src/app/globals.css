@@ -189,7 +189,7 @@
 }
 
 @utility news-grid {
-  @apply grid w-full h-[150vh] sm:h-[75vh] sm:min-h-[400px] min-h-[800px] grid-cols-1 section-gap sm:grid-cols-2 lg:grid-cols-3;
+  @apply grid w-full h-[150dvh] sm:h-[75dvh] sm:min-h-[400px] min-h-[800px] grid-cols-1 section-gap sm:grid-cols-2 lg:grid-cols-3;
 }
 
 @layer base {
