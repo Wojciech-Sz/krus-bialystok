@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const NewsSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  slug: z.string().min(3, "Slug must be at least 3 characters"),
-  mainImage: z.string().url().min(1, "Main image is required"),
+  title: z.string().min(3, "Tytuł musi zawierać co najmniej 3 znaki"),
+  slug: z.string().min(3, "Slug musi zawierać co najmniej 3 znaki"),
+  mainImage: z.string().url().min(1, "Zdjęcie główne jest wymagane"),
   images: z.array(z.string().url()),
-  content: z.string().min(10, "Content must be at least 10 characters"),
+  content: z.string().min(10, "Treść musi zawierać co najmniej 10 znaków"),
 });

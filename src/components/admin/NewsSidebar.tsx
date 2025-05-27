@@ -1,12 +1,21 @@
 "use client";
 
 import { UserButton } from "@clerk/nextjs";
-import { Home, PlusCircle, Search, Trash2 } from "lucide-react";
+import {
+  Home,
+  PlusCircle,
+  Search,
+  Trash2,
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { toast } from "sonner";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,24 +26,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
 import { useNewsRefresh } from "@/contexts/NewsRefreshContext";
 import {
   deleteNews,
   getNewsCount,
   getNewsSidebar,
 } from "@/lib/actions/news.action";
-import { cn } from "@/lib/utils";
 
-import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationPrevious,
-  PaginationLink,
-  PaginationNext,
-  PaginationEllipsis,
-} from "../ui/pagination";
+interface SidebarNewsItem {
+  title: string;
+  slug: string;
+}
 
 export default function NewsSidebar() {
   const pathname = usePathname();
@@ -53,10 +67,10 @@ export default function NewsSidebar() {
   const [isDeleting, setIsDeleting] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const limit = 6;
+  const limit = 10;
   const totalPages = Math.ceil(count / limit);
 
-  // Effect for debouncing search query
+  // Debounce search query
   useEffect(() => {
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -64,8 +78,8 @@ export default function NewsSidebar() {
 
     searchTimeoutRef.current = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-      setCurrentPage(1); // Reset to first page on new search
-    }, 500); // 500ms delay
+      setCurrentPage(1);
+    }, 300);
 
     return () => {
       if (searchTimeoutRef.current) {
@@ -74,19 +88,17 @@ export default function NewsSidebar() {
     };
   }, [searchQuery]);
 
-  // Effect for handling page changes, search query, and refresh trigger
+  // Load data
   useEffect(() => {
     let isMounted = true;
 
     const loadData = async () => {
       try {
         setLoading(true);
-        setNews([]);
-        const newsData = await getNewsSidebar(
-          currentPage,
-          debouncedSearchQuery
-        );
-        const countData = await getNewsCount(debouncedSearchQuery);
+        const [newsData, countData] = await Promise.all([
+          getNewsSidebar(currentPage, debouncedSearchQuery),
+          getNewsCount(debouncedSearchQuery),
+        ]);
 
         if (isMounted) {
           setNews(newsData);
@@ -119,7 +131,6 @@ export default function NewsSidebar() {
       setIsDeleting(true);
       await deleteNews(newsToDelete.slug);
 
-      // Update local state after successful deletion
       setNews((prevNews) =>
         prevNews.filter((item) => item.slug !== newsToDelete.slug)
       );
@@ -128,15 +139,15 @@ export default function NewsSidebar() {
       if (pathname === `/studio/${newsToDelete.slug}`) {
         router.push("/studio");
       }
-      toast.success("News deleted successfully");
 
-      // Adjust current page if necessary
+      toast.success("Article deleted successfully");
+
       if (news.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
     } catch (error) {
       console.error("Error deleting news:", error);
-      toast.error("Error deleting news");
+      toast.error("Failed to delete article");
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);
@@ -144,157 +155,177 @@ export default function NewsSidebar() {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const navigationItems = useMemo(
+    () => [
+      {
+        title: "Główna",
+        url: "/",
+        icon: Home,
+      },
+      {
+        title: "Nowy artykuł",
+        url: "/studio",
+        icon: PlusCircle,
+      },
+    ],
+    []
+  );
 
   return (
-    <div className="flex bg-background/90 flex-1 z-50 sticky h-screen md:inset-y-0 top-0 flex-col md:max-w-70">
-      <div className="flex items-center gap-2 p-2 md:p-4">
-        <Link href="/" className="mr-auto">
-          <Button variant="ghost" size="icon">
-            <Home className="h-5 w-5" />
-          </Button>
-        </Link>
-        <Link href="/studio">
-          <Button variant="ghost" size="icon">
-            <PlusCircle className="h-5 w-5" />
-          </Button>
-        </Link>
-        <UserButton />
-      </div>
-      <Separator />
-      <div className="p-2 md:p-4">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search news..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-      </div>
-      <Separator />
-      <nav className="flex-1 overflow-auto p-2">
-        <ul className="space-y-2">
-          {news.map((item) => (
-            <li key={item.slug}>
-              <div className="flex items-center gap-2">
-                <Link
-                  title={item.title}
-                  href={`/studio/${item.slug}`}
-                  prefetch={false}
-                  className={cn(
-                    "line-clamp-1 overflow-hidden flex-1 rounded-lg p-1 hover:bg-accent",
-                    pathname === `/studio/${item.slug}` &&
-                      "bg-accent font-medium"
-                  )}
-                >
-                  {item.title}
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 hover:text-destructive cursor-pointer shrink-0"
-                  onClick={() => {
-                    setNewsToDelete(item);
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+    <>
+      <Sidebar className="border-r">
+        <SidebarHeader className="border-b">
+          <div className="flex items-center justify-between p-3.5">
+            <div className="flex items-center gap-2">
+              <FileText className="h-6 w-6" />
+              <span className="font-semibold">Studio</span>
+            </div>
+          </div>
+        </SidebarHeader>
+
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>Nawigacja</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {navigationItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={pathname === item.url}>
+                      <Link href={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center justify-between">
+              <span>Artykuły</span>
+              <Badge variant="secondary" className="text-xs">
+                {count}
+              </Badge>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <div className="px-2 pb-2">
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Wyszukaj artykuły..."
+                    className="pl-8 h-8"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
-            </li>
-          ))}
-          {loading && (
-            <li className="p-2 text-sm text-muted-foreground">Loading...</li>
-          )}
-          {!loading && news.length === 0 && (
-            <li className="p-2 text-sm text-muted-foreground">No news found</li>
-          )}
-        </ul>
-      </nav>
-      {totalPages > 1 && (
-        <div className="p-4">
-          <Pagination>
-            <PaginationContent className="flex flex-col items-center">
-              <div className="flex items-center">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
-                  (page) => {
-                    if (
-                      page === 1 ||
-                      page === totalPages ||
-                      (page >= currentPage - 1 && page <= currentPage + 1)
-                    ) {
-                      return (
-                        <PaginationItem key={page}>
-                          <PaginationLink
-                            href="#"
-                            prefetch={false}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              handlePageChange(page);
-                            }}
-                            isActive={page === currentPage}
+
+              <SidebarMenu>
+                {loading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <SidebarMenuItem key={i}>
+                      <div className="flex items-center gap-2 p-2">
+                        <div className="h-4 w-4 bg-muted animate-pulse rounded" />
+                        <div className="h-4 flex-1 bg-muted animate-pulse rounded" />
+                      </div>
+                    </SidebarMenuItem>
+                  ))
+                ) : news.length === 0 ? (
+                  <SidebarMenuItem>
+                    <div className="p-2 text-sm text-muted-foreground">
+                      {searchQuery
+                        ? "Nie znaleziono artykułów"
+                        : "Brak artykułów"}
+                    </div>
+                  </SidebarMenuItem>
+                ) : (
+                  news.map((item) => (
+                    <SidebarMenuItem key={item.slug}>
+                      <div className="flex items-center gap-1 w-full">
+                        <SidebarMenuButton
+                          asChild
+                          isActive={pathname === `/studio/${item.slug}`}
+                          className="flex-1"
+                        >
+                          <Link
+                            href={`/studio/${item.slug}`}
+                            title={item.title}
                           >
-                            {page}
-                          </PaginationLink>
-                        </PaginationItem>
-                      );
-                    } else if (
-                      page === currentPage - 2 ||
-                      page === currentPage + 2
-                    ) {
-                      return (
-                        <PaginationItem key={page}>
-                          <PaginationEllipsis />
-                        </PaginationItem>
-                      );
+                            <FileText className="h-4 w-4" />
+                            <span className="truncate">{item.title}</span>
+                          </Link>
+                        </SidebarMenuButton>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:text-destructive shrink-0"
+                          onClick={() => {
+                            setNewsToDelete(item);
+                            setDeleteDialogOpen(true);
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </SidebarMenuItem>
+                  ))
+                )}
+              </SidebarMenu>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between px-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
                     }
-                    return null;
-                  }
-                )}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <span className="text-xs text-muted-foreground">
+                    {currentPage} z {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+
+        <SidebarFooter className="border-t">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <div className="flex items-center gap-2 p-2">
+                <UserButton />
+                <span className="text-sm text-muted-foreground">Admin</span>
               </div>
-              <div className="flex justify-between items-center">
-                {currentPage > 1 && (
-                  <PaginationItem>
-                    <PaginationPrevious
-                      href="#"
-                      prefetch={false}
-                      spanClassName="sm:hidden"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handlePageChange(currentPage - 1);
-                      }}
-                    />
-                  </PaginationItem>
-                )}
-                {currentPage < totalPages && (
-                  <PaginationItem className="self-end">
-                    <PaginationNext
-                      href="#"
-                      prefetch={false}
-                      spanClassName="sm:hidden"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handlePageChange(currentPage + 1);
-                      }}
-                    />
-                  </PaginationItem>
-                )}
-              </div>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      )}
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarFooter>
+      </Sidebar>
+
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete News</DialogTitle>
+            <DialogTitle>Delete Article</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{newsToDelete?.title}&quot;?
-              This action cannot be undone.
+              Are you sure you want to delete &quot;{newsToDelete?.title}&quot;
+              ? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -315,6 +346,6 @@ export default function NewsSidebar() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
