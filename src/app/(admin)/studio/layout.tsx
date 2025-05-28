@@ -13,10 +13,12 @@ export default async function StudioLayout({
   return (
     <NewsRefreshProvider>
       <SidebarProvider>
-        <div className="flex min-h-screen w-full">
+        <div className="flex flex-1">
           <NewsSidebar />
 
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 h-screen grid grid-rows-[auto_1fr] ">
+            {children}
+          </main>
 
           <Toaster />
         </div>

@@ -19,8 +19,8 @@ export function NewsPreview({ title, content, mainImage }: NewsPreviewProps) {
   const md = new MarkdownIt();
   const parsedContent = md.render(content);
   return (
-    <div className="max-w-4xl flex-1">
-      <Card>
+    <div className="max-w-4xl h-full overflow-hidden flex-1 ">
+      <Card className="overflow-auto h-full">
         <CardHeader className="space-y-4">
           {mainImage && (
             <div className="aspect-video w-full overflow-hidden rounded-lg">
@@ -35,7 +35,7 @@ export function NewsPreview({ title, content, mainImage }: NewsPreviewProps) {
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
               <span>{new Date().toLocaleDateString()}</span>
-              <Badge variant="secondary">Preview</Badge>
+              <Badge variant="secondary">Podgląd</Badge>
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
               {title || "Untitled Article"}

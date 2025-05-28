@@ -47,7 +47,6 @@ interface FormErrors {
 
 export default function NewsForm({ initialData }: NewsFormProps) {
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const { triggerRefresh } = useNewsRefresh();
   const [deleteTransition, startDeleteTransition] = useTransition();
@@ -71,7 +70,6 @@ export default function NewsForm({ initialData }: NewsFormProps) {
   }, [initialData?.images, form]);
 
   const onSubmit = async (values: z.infer<typeof NewsSchema>) => {
-    setIsSubmitting(true);
     try {
       const result = initialData?.id
         ? await updateNews(initialData.id, values)
@@ -115,8 +113,6 @@ export default function NewsForm({ initialData }: NewsFormProps) {
           ? error.message
           : "Coś poszło nie tak. Spróbuj ponownie."
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -179,7 +175,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <>
       <div className="flex sticky top-0 z-10 items-center bg-background/90 p-4 border-b">
         <SidebarTrigger />
         <div className="flex justify-between w-full items-center">
@@ -207,12 +203,12 @@ export default function NewsForm({ initialData }: NewsFormProps) {
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={form.formState.isSubmitting}
               onClick={form.handleSubmit(onSubmit)}
               className="gap-2"
             >
               <Save className="h-4 w-4" />
-              {isSubmitting
+              {form.formState.isSubmitting
                 ? "Saving..."
                 : initialData
                   ? "Zapisz zmiany"
@@ -222,17 +218,17 @@ export default function NewsForm({ initialData }: NewsFormProps) {
         </div>
       </div>
 
-      <div className="p-4 gap-5 w-full flex items-center xl:items-start xl:justify-center flex-col xl:flex-row">
+      <div className="p-4 gap-5 overflow-hidden flex items-center xl:items-start xl:justify-center flex-col xl:flex-row">
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className="flex flex-col flex-1 w-full max-w-4xl gap-2"
+            className="flex flex-col overflow-auto h-full flex-1 w-full max-w-4xl gap-2"
           >
-            <Card>
+            <Card className="gap-3">
               <CardHeader>
                 <CardTitle>Informacje podstawowe</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="flex flex-col gap-2">
                 <FormField
                   control={form.control}
                   name="title"
@@ -282,7 +278,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="gap-3">
               <CardHeader>
                 <CardTitle>Główne zdjęcie</CardTitle>
               </CardHeader>
@@ -292,7 +288,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                   name="mainImage"
                   render={({ field }) => (
                     <FormItem>
-                      <div className="space-y-4">
+                      <div className="flex flex-col gap-2">
                         {field.value && (
                           <div className="relative">
                             <img
@@ -317,7 +313,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="gap-3">
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Zdjęcia</span>
@@ -332,7 +328,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                   name="images"
                   render={() => (
                     <FormItem>
-                      <div className="space-y-4">
+                      <div className="flex flex-col gap-2">
                         {form.watch("images").map((image, index) => (
                           <div
                             key={index}
@@ -409,9 +405,9 @@ export default function NewsForm({ initialData }: NewsFormProps) {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="gap-3">
               <CardHeader>
-                <CardTitle>Content</CardTitle>
+                <CardTitle>Kontent</CardTitle>
               </CardHeader>
               <CardContent>
                 <FormField
@@ -458,7 +454,7 @@ export default function NewsForm({ initialData }: NewsFormProps) {
                     images: form.watch("images"),
                   });
                 }}
-                disabled={isSubmitting}
+                disabled={form.formState.isSubmitting}
               >
                 Reset
               </Button>
@@ -473,6 +469,6 @@ export default function NewsForm({ initialData }: NewsFormProps) {
           />
         )}
       </div>
-    </div>
+    </>
   );
 }

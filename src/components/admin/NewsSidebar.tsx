@@ -67,7 +67,7 @@ export default function NewsSidebar() {
   const [isDeleting, setIsDeleting] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const limit = 10;
+  const limit = 6;
   const totalPages = Math.ceil(count / limit);
 
   // Debounce search query
@@ -202,17 +202,17 @@ export default function NewsSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarGroup>
+          <SidebarGroup className="flex-1">
             <SidebarGroupLabel className="flex items-center justify-between">
               <span>Artykuły</span>
               <Badge variant="secondary" className="text-xs">
                 {count}
               </Badge>
             </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <div className="px-2 pb-2">
+            <SidebarGroupContent className="flex-1 flex flex-col">
+              <div className="pr-2 pb-2">
                 <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Wyszukaj artykuły..."
                     className="pl-8 h-8"
@@ -222,7 +222,7 @@ export default function NewsSidebar() {
                 </div>
               </div>
 
-              <SidebarMenu>
+              <SidebarMenu className="flex-1">
                 {loading ? (
                   Array.from({ length: 3 }).map((_, i) => (
                     <SidebarMenuItem key={i}>
